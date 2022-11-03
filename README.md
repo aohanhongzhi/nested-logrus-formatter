@@ -95,3 +95,5 @@ GOPROXY=https://goproxy.io,direct
     //手动初始化下就好了
     nested.LogInit()
 ```
+
+![img.png](img.png)
