@@ -85,3 +85,13 @@ GOPROXY=https://goproxy.cn,direct
 或者
 GOPROXY=https://goproxy.io,direct
 ```
+
+# 新的使用方式
+
+```go
+	nested "github.com/aohanhongzhi/nested-logrus-formatter"
+	log "github.com/sirupsen/logrus"
+
+    //手动初始化下就好了
+    nested.LogInit()
+```
