@@ -101,3 +101,10 @@ GOPROXY=https://goproxy.io,direct
 # 颜色
 
 ![输入图片说明](assets/log-color.png)
+
+# 发布
+
+```shell
+git tag v1.3.3
+git push --tags 
+```
