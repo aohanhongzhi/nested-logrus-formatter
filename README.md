@@ -96,4 +96,8 @@ GOPROXY=https://goproxy.io,direct
     nested.LogInit()
 ```
 
-![img.png](img.png)
+![img.png](assets/img.png)
+
+# 颜色
+
+![输入图片说明](assets/log-color.png)

@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/antonfisher/nested-logrus-formatter"
+
+	formatter "github.com/aohanhongzhi/nested-logrus-formatter"
 	"github.com/sirupsen/logrus"
 )
 
