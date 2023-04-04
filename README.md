@@ -105,6 +105,6 @@ GOPROXY=https://goproxy.io,direct
 # 发布
 
 ```shell
-git tag v1.3.3
+git tag v1.3.4
 git push --tags 
 ```

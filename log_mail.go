@@ -161,6 +161,7 @@ func createMailMessage(entry *logrus.Entry, appname string, from, to string) *by
 	body := entry.Time.Format(format) + " - " + entry.Message
 	subject := appname + " - " + entry.Level.String()
 	fields, _ := json.MarshalIndent(entry.Data, "", "\t")
+	// 下面的\n 是格式化必要的，和http协议一样概念，就换行区分 header body等
 	contents := fmt.Sprintf("From: %v\nTo: %v\nSubject: %s\r\n\r\n%s\r\n\r\n", from, to, subject, body)
 	if len(fields) > 2 {
 		contents = fmt.Sprintf("%v%v", contents, fields)
