@@ -18,6 +18,7 @@ func LogInit(noConsole bool) {
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := "./log"
 	errorLogPath := "./log/error/"
+	// FIXME: 这里注意日志文件启动路径会不会随着脚本启动的时候执行目录不一样，日志文件存储也不一样。日志不是与可执行文件同一目录，而是与执行启动目录在一起。
 	if _, err := os.Stat(logPath); os.IsNotExist(err) {
 		err1 := os.Mkdir(logPath, os.ModePerm)
 		if err1 != nil {
