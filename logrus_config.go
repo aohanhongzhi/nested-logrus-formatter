@@ -98,7 +98,7 @@ func LogInit(noConsole bool) io.Writer {
 		MaxAge:     2,    //days
 		Compress:   true, // disabled by default
 	}
-	multiWriter := io.MultiWriter(os.Stdout)
+	multiWriter := io.MultiWriter(os.Stdout, fileWriter)
 	log.SetFormatter(stdoutFormatter)
 	if noConsole {
 		multiWriter = io.MultiWriter(fileWriter)
