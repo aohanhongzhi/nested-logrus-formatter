@@ -82,8 +82,6 @@ make demo
 
 ```
 GOPROXY=https://goproxy.cn,direct
-或者
-GOPROXY=https://goproxy.io,direct
 ```
 
 # 新的使用方式
@@ -93,10 +91,44 @@ GOPROXY=https://goproxy.io,direct
 	log "github.com/sirupsen/logrus"
 
     //手动初始化下就好了
-    nested.LogInit()
+    nested.LogInit(true)
 ```
 
 ![img.png](assets/img.png)
+
+
+## 配合gin使用
+
+```go
+	gin.DefaultWriter = nested.LogInit(true)
+```
+
+## 配合gorm使用
+
+```go
+	gormLogger := gormv2logrus.NewGormlog(gormv2logrus.WithLogrus(logrus.StandardLogger()))
+	gormLogger.LogMode(logger.Warn)
+	gormConfig := &gorm.Config{
+		Logger: gormLogger,
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix:   "tb_",
+			SingularTable: true,
+		},
+	}
+
+	// 数据库配置
+	var err error
+	dsn := "username:password@tcp(mysq.host.com:3306)/km?charset=utf8mb4&parseTime=True&loc=Local"
+	Gormdb, err = gorm.Open(
+		mysql.New(mysql.Config{
+			DSN:               dsn,
+			DefaultStringSize: 256,
+		}), gormConfig)
+	if err != nil {
+		panic("failed to connect database")
+	}
+	Gormdb.AutoMigrate(&model.NPCComputerInfo{})
+```
 
 # 颜色
 
