@@ -97,6 +97,15 @@ GOPROXY=https://goproxy.cn,direct
 ![img.png](assets/img.png)
 
 
+```go
+	// -noConsole=true 在启动命令行加上这个，就可以实现线上不需要控制台输出，本地开发需要控制台。
+	noConsole := flag.Bool("noConsole", false, "开发环境")
+	flag.Parse()
+	// 数据库配置
+	gin.DefaultWriter = nested.LogInit(*noConsole)
+```
+
+
 ## 配合gin使用
 
 ```go
