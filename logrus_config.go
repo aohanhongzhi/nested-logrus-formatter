@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func LogInit(noConsole bool) {
+func LogInit(noConsole bool) io.Writer {
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := "./log"
 	errorLogPath := "./log/error/"
@@ -109,4 +109,5 @@ func LogInit(noConsole bool) {
 
 	// gin的日志接管
 	// gin.DefaultWriter = multiWriter
+	return multiWriter
 }
