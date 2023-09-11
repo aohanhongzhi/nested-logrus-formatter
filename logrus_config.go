@@ -58,7 +58,6 @@ func LogInit(noConsole bool) {
 			return fmt.Sprintf(" %s:%d", f.File, f.Line)
 		},
 	}
-	log.SetFormatter(stdoutFormatter)
 	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。
 	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
 	writer, _ := rotatelogs.New(
@@ -110,8 +109,4 @@ func LogInit(noConsole bool) {
 
 	// gin的日志接管
 	// gin.DefaultWriter = multiWriter
-
-	//// 错误日志发送到钉钉
-	//dingHook := NewDingHook("jitu", log.ErrorLevel)
-	//log.AddHook(dingHook)
 }

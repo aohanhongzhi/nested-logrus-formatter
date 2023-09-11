@@ -14,3 +14,5 @@
 # IDE
 *.code-workspace
 .idea/
+go.sum
+*.log
