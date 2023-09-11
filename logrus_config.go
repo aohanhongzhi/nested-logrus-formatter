@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// LogInit 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
 func LogInit(noConsole bool) io.Writer {
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := "./log"
@@ -89,7 +90,7 @@ func LogInit(noConsole bool) io.Writer {
 		log.FatalLevel: allLevelWriter,
 		log.PanicLevel: allLevelWriter,
 	}, fileFormatter)
-	log.AddHook(lfHook) // 输出文件
+	log.AddHook(lfHook) // 输出到log文件夹（一定会输出）
 
 	fileWriter := &lumberjack.Logger{
 		Filename:   "all.log",
@@ -98,14 +99,14 @@ func LogInit(noConsole bool) io.Writer {
 		MaxAge:     2,    //days
 		Compress:   true, // disabled by default
 	}
-	multiWriter := io.MultiWriter(os.Stdout, fileWriter)
+	multiWriter := io.MultiWriter(os.Stdout) // 输出到控制台
 	log.SetFormatter(stdoutFormatter)
 	if noConsole {
-		multiWriter = io.MultiWriter(fileWriter)
+		multiWriter = io.MultiWriter(fileWriter) // 覆盖上面的控制台输出
 		log.SetFormatter(fileFormatter)
 	}
 	log.SetOutput(multiWriter)
-	// log.SetOutput(os.Stdout) // 输出控制台
+	// log.SetOutput(os.Stdout) // 直接输出控制台
 
 	// gin的日志接管
 	// gin.DefaultWriter = multiWriter
