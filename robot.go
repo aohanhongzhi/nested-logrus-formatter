@@ -2,6 +2,7 @@ package formatter
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -30,6 +31,11 @@ func (hook *RobotLog) Fire(entry *log.Entry) error {
 	data := make(log.Fields)
 	for k, v := range entry.Data {
 		data[k] = v
+	}
+	data["app"] = "chrome-driver"
+	if entry.HasCaller() {
+		fileVal := fmt.Sprintf("%s:%d", entry.Caller.File, entry.Caller.Line)
+		data["location"] = fileVal
 	}
 	data["message"] = entry.Message
 	payload, err := json.Marshal(data)
