@@ -82,6 +82,8 @@ make demo
 
 ```
 GOPROXY=https://goproxy.cn,direct
+或者
+GOPROXY=https://goproxy.io,direct
 ```
 
 # 新的使用方式
