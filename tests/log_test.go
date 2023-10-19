@@ -8,7 +8,7 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	formatter.LogInit(true)
+	formatter.LogInit(true, true)
 	log.Info("Testing")
 	log.Error("Testing")
 }
