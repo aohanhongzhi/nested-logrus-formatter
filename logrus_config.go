@@ -15,7 +15,7 @@ import (
 )
 
 // LogInit 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
-func LogInit(noConsole, robot bool) io.Writer {
+func LogInit(noConsole, robot bool, appName string) io.Writer {
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := "./log"
 	errorLogPath := "./log/error/"
@@ -112,7 +112,7 @@ func LogInit(noConsole, robot bool) io.Writer {
 	// gin.DefaultWriter = multiWriter
 
 	if robot {
-		log.AddHook(NewRobotLogger())
+		log.AddHook(NewRobotLogger(appName))
 	}
 
 	return multiWriter

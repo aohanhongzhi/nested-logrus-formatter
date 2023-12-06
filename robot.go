@@ -13,10 +13,11 @@ import (
 )
 
 type RobotLog struct {
+	AppName string
 }
 
-func NewRobotLogger() *RobotLog {
-	return &RobotLog{}
+func NewRobotLogger(AppName string) *RobotLog {
+	return &RobotLog{AppName}
 }
 
 func (hook *RobotLog) Levels() []log.Level {
@@ -32,7 +33,7 @@ func (hook *RobotLog) Fire(entry *log.Entry) error {
 	for k, v := range entry.Data {
 		data[k] = v
 	}
-	data["app"] = "chrome-driver"
+	data["app"] = hook.AppName
 	if entry.HasCaller() {
 		fileVal := fmt.Sprintf("%s:%d", entry.Caller.File, entry.Caller.Line)
 		data["location"] = fileVal
