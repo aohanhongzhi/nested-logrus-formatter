@@ -148,6 +148,6 @@ GOPROXY=https://goproxy.io,direct
 # 发布
 
 ```shell
-git tag v1.3.4
+git tag v1.3.9
 git push --tags 
 ```
