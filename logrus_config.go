@@ -14,8 +14,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// LogInit 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
-func LogInit(noConsole, robot bool, appName string) io.Writer {
+// 考虑单元测试里面的兼容性，所以新增增加的函数名不一样
+func LogInit(noConsole bool) io.Writer {
+	return LogInitRobot(noConsole, false, "go-app")
+}
+
+//  本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
+func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := "./log"
 	errorLogPath := "./log/error/"

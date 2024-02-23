@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -43,7 +45,7 @@ func (hook *RobotLog) Fire(entry *log.Entry) error {
 	if err != nil {
 		return err
 	}
-	SendRobotNoticeGroup(string(payload))
+	SendToRobotMessage(string(payload))
 
 	return nil
 }
@@ -55,15 +57,58 @@ type MessageParamIM struct {
 	RobotId    int    `form:"robot_id" json:"robot_id" label:"robot_id"`
 }
 
+func SendToRobotMessage(msg string) {
+	_, file, line, ok := runtime.Caller(2)
+	if !ok {
+		log.Errorf("获取行号失败 %v,%v", file, line)
+	}
+	timeValue := time.Now().Format("2006-01-02 15:04:05")
+	name, err := os.Hostname()
+	if err != nil {
+		log.Errorf("获取主机名失败 %+v", err)
+	}
+	content := timeValue + ",kuaima-express," + name + file + ":" + strconv.Itoa(line) + ":" + msg
+	SendRobotMessage(content, 2, 426, 4)
+}
+
+type NewMessageParamIM struct {
+	Type string `json:"type"`
+	//SenderId int           `json:"sender_id"` // TODO 最好传过来，可以标记是极兔助手还是快码机器人。但是总体来说没啥关系。
+	Content  string        `json:"content"`
+	QuoteId  string        `json:"quote_id"`
+	Mentions []interface{} `json:"mentions"`
+	Receiver struct {
+		ReceiverId int `json:"receiver_id"`
+		TalkType   int `json:"talk_type"`
+	} `json:"receiver"`
+}
+
+type NewRobotTextMessageRequest struct {
+	NewMessageParamIM
+	RobotId int `json:"robot_id"`
+}
+
 func SendRobotMessage(content string, talkType, ReceiverId, RobotId int) {
-	req := &MessageParamIM{
-		TalkType:   talkType, // 私聊
-		Text:       content,
-		ReceiverId: ReceiverId, // 同一发送给机器人助手
-		RobotId:    RobotId,    // 可以给 token信息即可识别身份
+	defer PanicHandler()
+
+	messageParam := NewMessageParamIM{
+		Type:    "text",
+		Content: content,
+		Receiver: struct {
+			ReceiverId int `json:"receiver_id"`
+			TalkType   int `json:"talk_type"`
+		}{
+			ReceiverId: ReceiverId,
+			TalkType:   talkType,
+		},
 	}
 
-	marshal, err := json.Marshal(&req)
+	paramMe := &NewRobotTextMessageRequest{
+		NewMessageParamIM: messageParam,
+		RobotId:           RobotId, // 这个可能是机器人，也可能是极兔助手（不算机器人）
+	}
+
+	marshal, err := json.Marshal(&paramMe)
 	if err != nil {
 		log.Error(err)
 	}
@@ -72,17 +117,9 @@ func SendRobotMessage(content string, talkType, ReceiverId, RobotId int) {
 	headerMap := make(map[string]string)
 	headerMap["KM"] = "kuaima2023"
 	headerMap["content-type"] = "application/json;charset=UTF-8"
-	RequestJson("POST", "https://im.cupb.top/api/api/v1/open/talk/message/robot/text", reader, headerMap)
-}
 
-func SendRobotNoticeGroup(content string) {
-	timeValue := time.Now().Format("2006-01-02 15:04:05")
-	name, err := os.Hostname()
-	if err != nil {
-		log.Errorf("获取主机名失败 %+v", err)
-	}
-	content = timeValue + "," + name + ":" + content
-	SendRobotMessage(content, 2, 426, 4)
+	RequestJson(http.MethodPost, "https://im.cupb.top/api/api/v1/open/talk/message/robot/text", reader, headerMap)
+
 }
 
 var jtClient = &http.Client{}
