@@ -36,8 +36,12 @@ func (hook *RobotLog) Fire(entry *log.Entry) error {
 		data[k] = v
 	}
 	data["app"] = hook.AppName
+	var file string
+	var line int
 	if entry.HasCaller() {
-		fileVal := fmt.Sprintf("%s:%d", entry.Caller.File, entry.Caller.Line)
+		file = entry.Caller.File
+		line = entry.Caller.Line
+		fileVal := fmt.Sprintf("%s:%d", file, line)
 		data["location"] = fileVal
 	}
 	data["message"] = entry.Message
@@ -45,8 +49,15 @@ func (hook *RobotLog) Fire(entry *log.Entry) error {
 	if err != nil {
 		return err
 	}
-	SendToRobotMessage(string(payload))
+	SendRobotMessage(string(payload), 2, 426, 4)
 
+	timeValue := time.Now().Format("2006-01-02 15:04:05")
+	name, err := os.Hostname()
+	if err != nil {
+		log.Errorf("获取主机名失败 %+v", err)
+	}
+	content := timeValue + "【" + hook.AppName + "】" + name + "(" + file + ":" + strconv.Itoa(line) + "):" + entry.Message
+	FeishuRobot(content)
 	return nil
 }
 
@@ -55,20 +66,6 @@ type MessageParamIM struct {
 	ReceiverId int    `form:"receiver_id" json:"receiver_id" binding:"required,numeric,gt=0" label:"receiver_id"`
 	Text       string `form:"text" json:"text" binding:"required,max=3000" label:"text"`
 	RobotId    int    `form:"robot_id" json:"robot_id" label:"robot_id"`
-}
-
-func SendToRobotMessage(msg string) {
-	_, file, line, ok := runtime.Caller(2)
-	if !ok {
-		log.Errorf("获取行号失败 %v,%v", file, line)
-	}
-	timeValue := time.Now().Format("2006-01-02 15:04:05")
-	name, err := os.Hostname()
-	if err != nil {
-		log.Errorf("获取主机名失败 %+v", err)
-	}
-	content := timeValue + ",kuaima-express," + name + file + ":" + strconv.Itoa(line) + ":" + msg
-	SendRobotMessage(content, 2, 426, 4)
 }
 
 type NewMessageParamIM struct {
@@ -86,6 +83,20 @@ type NewMessageParamIM struct {
 type NewRobotTextMessageRequest struct {
 	NewMessageParamIM
 	RobotId int `json:"robot_id"`
+}
+
+func SendToRobotMessage(appName, msg string, talkType, ReceiverId, RobotId int) {
+	_, file, line, ok := runtime.Caller(1)
+	if !ok {
+		log.Errorf("获取行号失败 %v,%v", file, line)
+	}
+	timeValue := time.Now().Format("2006-01-02 15:04:05")
+	name, err := os.Hostname()
+	if err != nil {
+		log.Errorf("获取主机名失败 %+v", err)
+	}
+	content := timeValue + "," + appName + "," + name + file + ":" + strconv.Itoa(line) + ":" + msg
+	SendRobotMessage(content, talkType, ReceiverId, RobotId)
 }
 
 func SendRobotMessage(content string, talkType, ReceiverId, RobotId int) {

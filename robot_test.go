@@ -7,7 +7,8 @@ import (
 )
 
 func TestRobot(t *testing.T) {
-	log.AddHook(NewRobotLogger("app-test"))
+	LogInitRobot(false, true, "test")
+	//log.AddHook(NewRobotLogger("app-test"))
 
 	log.Error("测试")
 
