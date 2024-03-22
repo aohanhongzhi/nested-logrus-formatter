@@ -57,7 +57,7 @@ func (hook *RobotLog) Fire(entry *log.Entry) error {
 		log.Errorf("获取主机名失败 %+v", err)
 	}
 	content := timeValue + "【" + hook.AppName + "】" + name + "(" + file + ":" + strconv.Itoa(line) + "):" + entry.Message
-	FeishuRobot(content)
+	feishuRobot(content)
 	return nil
 }
 
