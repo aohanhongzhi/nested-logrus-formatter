@@ -29,13 +29,13 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 	errorLogPath := "./log/error/"
 	// FIXME: 这里注意日志文件启动路径会不会随着脚本启动的时候执行目录不一样，日志文件存储也不一样。日志不是与可执行文件同一目录，而是与执行启动目录在一起。
 	if _, err := os.Stat(logPath); os.IsNotExist(err) {
-		err1 := os.Mkdir(logPath, os.ModePerm)
+		err1 := os.MkdirAll(logPath, os.ModePerm)
 		if err1 != nil {
 			log.Errorf("日志文件夹创建失败 %+v", err1)
 		}
 	}
 	if _, err := os.Stat(errorLogPath); os.IsNotExist(err) {
-		err1 := os.Mkdir(errorLogPath, os.ModePerm)
+		err1 := os.MkdirAll(errorLogPath, os.ModePerm)
 		if err1 != nil {
 			log.Errorf("Error日志文件夹创建失败%+v", err1)
 		}
@@ -58,6 +58,7 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 			return fmt.Sprintf(" (%s:%d)", f.File, f.Line)
 		},
 	}
+
 	stdoutFormatter := &Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 		HideKeys:        true,
@@ -67,6 +68,7 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 			return fmt.Sprintf(" %s:%d", f.File, f.Line)
 		},
 	}
+
 	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。
 	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
 	writer, _ := rotatelogs.New(
@@ -84,9 +86,9 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
 		rotatelogs.WithRotationSize(10*1024*1024), //设置10MB大小,当大于这个容量时，创建新的日志文件
 	)
-	writers := []io.Writer{
-		writer,
-		errorWriter}
+
+	writers := []io.Writer{writer, errorWriter}
+
 	//同时写到两个文件里
 	allLevelWriter := io.MultiWriter(writers...)
 
@@ -107,11 +109,15 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		MaxAge:     2,    //days
 		Compress:   true, // disabled by default
 	}
-	multiWriter := io.MultiWriter(os.Stdout) // 输出到控制台
-	log.SetFormatter(stdoutFormatter)
+
+	var multiWriter io.Writer
 	if noConsole {
 		multiWriter = io.MultiWriter(fileWriter) // 覆盖上面的控制台输出
 		log.SetFormatter(fileFormatter)
+	} else {
+		// 控制台和文件都有，因为有时候控制台看起来麻烦，一旦重启就没了，所以还是需要持久化存储
+		multiWriter = io.MultiWriter(os.Stdout, fileWriter) // 控制台+文件持久化
+		log.SetFormatter(stdoutFormatter)
 	}
 	log.SetOutput(multiWriter)
 	// log.SetOutput(os.Stdout) // 直接输出控制台
