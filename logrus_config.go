@@ -26,12 +26,19 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 	AppName = appName
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := "./log"
+	warnLogPath := "./log/warn/"
 	errorLogPath := "./log/error/"
 	// FIXME: 这里注意日志文件启动路径会不会随着脚本启动的时候执行目录不一样，日志文件存储也不一样。日志不是与可执行文件同一目录，而是与执行启动目录在一起。
 	if _, err := os.Stat(logPath); os.IsNotExist(err) {
 		err1 := os.MkdirAll(logPath, os.ModePerm)
 		if err1 != nil {
 			log.Errorf("日志文件夹创建失败 %+v", err1)
+		}
+	}
+	if _, err := os.Stat(warnLogPath); os.IsNotExist(err) {
+		err1 := os.MkdirAll(warnLogPath, os.ModePerm)
+		if err1 != nil {
+			log.Errorf("Warn日志文件夹创建失败%+v", err1)
 		}
 	}
 	if _, err := os.Stat(errorLogPath); os.IsNotExist(err) {
@@ -41,6 +48,7 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		}
 	}
 	logFilePath := filepath.Join(logPath, "go")
+	warnlogFilePath := filepath.Join(warnLogPath, "warn")
 	errorlogFilePath := filepath.Join(errorLogPath, "error")
 
 	// 设置项目默认日志级别
@@ -79,6 +87,14 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		rotatelogs.WithRotationSize(10*1024*1024), //设置10MB大小,当大于这个容量时，创建新的日志文件
 	)
 
+	warnWriter, _ := rotatelogs.New(
+		warnlogFilePath+"-%Y%m%d%H%M.log",
+		//rotatelogs.WithLinkName(logFilePath),
+		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
+		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
+		rotatelogs.WithRotationSize(10*1024*1024), //设置10MB大小,当大于这个容量时，创建新的日志文件
+	)
+
 	errorWriter, _ := rotatelogs.New(
 		errorlogFilePath+"-%Y%m%d%H%M.log",
 		//rotatelogs.WithLinkName(logFilePath),
@@ -101,6 +117,11 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		log.PanicLevel: allLevelWriter,
 	}, fileFormatter)
 	log.AddHook(lfHook) // 输出到log文件夹（一定会输出）
+
+	warnlfHook := lfshook.NewHook(lfshook.WriterMap{
+		log.WarnLevel: warnWriter,
+	}, fileFormatter)
+	log.AddHook(warnlfHook) // 输出到log文件夹（一定会输出）
 
 	fileWriter := &lumberjack.Logger{
 		Filename:   "all.log",

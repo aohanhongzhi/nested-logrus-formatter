@@ -7,10 +7,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func LogInitRobot(t *testing.T) {
+func TestLogInitRobot(t *testing.T) {
 	formatter.LogInitRobot(true, true, "test")
+	log.SetLevel(log.DebugLevel)
 	log.Info("Testing")
 	log.Error("Testing")
+	log.Warn("Testing")
+	log.Debug("Testing")
 }
 
 func TestLog(t *testing.T) {
