@@ -17,7 +17,7 @@ func TestLogInitRobot(t *testing.T) {
 }
 
 func TestLog(t *testing.T) {
-	formatter.LogInit(true)
+	formatter.LogInit(false)
 	log.Info("Testing")
 	log.Error("Testing")
 }

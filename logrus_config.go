@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
@@ -63,7 +64,26 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		NoFieldsSpace:   false,
 		FieldsOrder:     []string{"component", "category", "req"},
 		CustomCallerFormatter: func(f *runtime.Frame) string {
-			return fmt.Sprintf(" (%s:%d)", f.File, f.Line)
+			file, line := f.File, f.Line
+			if strings.HasPrefix(f.Function, "github.com/aohanhongzhi/gormv2-logrus") {
+				_, file1, line1, ok := runtime.Caller(1)
+				if !ok {
+					log.Errorf("获取行号失败 %v,%v", file1, line1)
+				}
+
+				_, file1, line1, ok = runtime.Caller(2)
+				if !ok {
+					log.Errorf("获取行号失败 %v,%v", file1, line1)
+				}
+
+				_, file1, line1, ok = runtime.Caller(3)
+				if !ok {
+					log.Errorf("获取行号失败 %v,%v", file1, line1)
+				}
+				return fmt.Sprintf(" (%s:%d) => (%s:%d)", file1, line1, file, line)
+			}
+
+			return fmt.Sprintf(" (%s:%d)", file, line)
 		},
 	}
 
@@ -73,6 +93,24 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		NoFieldsSpace:   false,
 		FieldsOrder:     []string{"component", "category", "req"},
 		CustomCallerFormatter: func(f *runtime.Frame) string {
+			file, line := f.File, f.Line
+			if strings.HasPrefix(f.Function, "github.com/aohanhongzhi/gormv2-logrus") {
+				_, file1, line1, ok := runtime.Caller(1)
+				if !ok {
+					log.Errorf("获取行号失败 %v,%v", file1, line1)
+				}
+
+				_, file1, line1, ok = runtime.Caller(2)
+				if !ok {
+					log.Errorf("获取行号失败 %v,%v", file1, line1)
+				}
+
+				_, file1, line1, ok = runtime.Caller(3)
+				if !ok {
+					log.Errorf("获取行号失败 %v,%v", file1, line1)
+				}
+				return fmt.Sprintf(" (%s:%d) => (%s:%d)", file1, line1, file, line)
+			}
 			return fmt.Sprintf(" %s:%d", f.File, f.Line)
 		},
 	}
