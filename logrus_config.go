@@ -80,7 +80,9 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
-				return fmt.Sprintf(" (%s:%d) => (%s:%d)", file1, line1, file, line)
+				sprintf := fmt.Sprintf(" (%s:%d) => (%s:%d)", file1, line1, file, line)
+				println(sprintf)
+				return sprintf
 			}
 
 			return fmt.Sprintf(" (%s:%d)", file, line)
@@ -109,7 +111,9 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
-				return fmt.Sprintf(" (%s:%d) => (%s:%d)", file1, line1, file, line)
+				sprintf := fmt.Sprintf(" (%s:%d) => (%s:%d)", file1, line1, file, line)
+				println(sprintf)
+				return sprintf
 			}
 			return fmt.Sprintf(" %s:%d", f.File, f.Line)
 		},
