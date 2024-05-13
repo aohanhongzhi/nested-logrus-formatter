@@ -66,23 +66,13 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		CustomCallerFormatter: func(f *runtime.Frame) string {
 			file, line := f.File, f.Line
 			if strings.HasPrefix(f.Function, "github.com/aohanhongzhi/gormv2-logrus") {
-				_, file1, line1, ok := runtime.Caller(1)
+				_, file1, line1, ok := runtime.Caller(14)
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
-
-				_, file1, line1, ok = runtime.Caller(13)
-				if !ok {
-					log.Errorf("获取行号失败 %v,%v", file1, line1)
-				}
-
-				_, file1, line1, ok = runtime.Caller(14)
-				if !ok {
-					log.Errorf("获取行号失败 %v,%v", file1, line1)
-				}
-				sprintf := fmt.Sprintf(" (%s:%d) => (%s:%d)", file1, line1, file, line)
-				println(sprintf)
-				return sprintf
+				//sprintf := fmt.Sprintf(" fileFormatter (%s:%d) => (%s:%d)", file1, line1, file, line)
+				//println(sprintf)
+				return fmt.Sprintf(" (%s:%d)  => (%s:%d) ", file1, line1, file, line)
 			}
 
 			return fmt.Sprintf(" (%s:%d)", file, line)
@@ -97,23 +87,13 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 		CustomCallerFormatter: func(f *runtime.Frame) string {
 			file, line := f.File, f.Line
 			if strings.HasPrefix(f.Function, "github.com/aohanhongzhi/gormv2-logrus") {
-				_, file1, line1, ok := runtime.Caller(1)
+				_, file1, line1, ok := runtime.Caller(11)
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
-
-				_, file1, line1, ok = runtime.Caller(13)
-				if !ok {
-					log.Errorf("获取行号失败 %v,%v", file1, line1)
-				}
-
-				_, file1, line1, ok = runtime.Caller(14)
-				if !ok {
-					log.Errorf("获取行号失败 %v,%v", file1, line1)
-				}
-				sprintf := fmt.Sprintf(" (%s:%d) => (%s:%d)", file1, line1, file, line)
-				println(sprintf)
-				return sprintf
+				//sprintf := fmt.Sprintf(" stdoutFormatter (%s:%d) => (%s:%d)", file1, line1, file, line)
+				//println(sprintf)
+				return fmt.Sprintf(" %s:%d  %s:%d  ", file1, line1, file, line)
 			}
 			return fmt.Sprintf(" %s:%d", f.File, f.Line)
 		},
