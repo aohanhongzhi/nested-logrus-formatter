@@ -71,12 +71,12 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
 
-				_, file1, line1, ok = runtime.Caller(2)
+				_, file1, line1, ok = runtime.Caller(13)
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
 
-				_, file1, line1, ok = runtime.Caller(3)
+				_, file1, line1, ok = runtime.Caller(14)
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
@@ -100,12 +100,12 @@ func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
 
-				_, file1, line1, ok = runtime.Caller(2)
+				_, file1, line1, ok = runtime.Caller(13)
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
 
-				_, file1, line1, ok = runtime.Caller(3)
+				_, file1, line1, ok = runtime.Caller(14)
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
