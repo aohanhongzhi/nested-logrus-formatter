@@ -8,7 +8,7 @@
 
 1. 控制台输出与文件写入
 2. 日志文件与行号定位，支持跳转
-2. 支持GORM的日志接管，适配其日志的打印。github. com/aohanhongzhi/gormv2-logrus
+2. 支持GORM的日志接管，适配其日志的打印。github.com/aohanhongzhi/gormv2-logrus
 3. 邮件报警
 4. 飞书报警
 5. http机器人报警
@@ -17,17 +17,17 @@
 
 ![img.png](assets/log-to-file.png)
 
-
 ### 日志文件与行号定位，支持跳转
 
 ![img_1.png](assets/file-number-jump.png)
 
 ### 支持GORM的日志接管，适配其日志的打印。
 
+https://github.com/aohanhongzhi/gormv2-logrus
+
 这里注意一个点，本来下面这行查询语句并不是日志记录语句，而是通过特殊栈查找，打印的该文件和行号，这样方便GORM定位与调试。
 
 ![img_2.png](assets/gorm-location-jump.png)
-
 
 # 代码介绍
 
@@ -125,7 +125,6 @@ GOPROXY=https://goproxy.io,direct
 
 ![img.png](assets/usage.png)
 
-
 ```go
 	// -noConsole=true 在启动命令行加上这个，就可以实现线上不需要控制台输出，本地开发需要控制台。
 	noConsole := flag.Bool("noConsole", false, "开发环境")
@@ -134,11 +133,10 @@ GOPROXY=https://goproxy.io,direct
 	gin.DefaultWriter = nested.LogInit(*noConsole)
 ```
 
-
 ## 配合gin使用
 
 ```go
-	gin.DefaultWriter = nested.LogInit(true)
+    gin.DefaultWriter = nested.LogInit(true)
 ```
 
 ## 配合gorm使用
