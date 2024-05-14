@@ -2,7 +2,34 @@
 
 [![Build Status](https://travis-ci.org/antonfisher/nested-logrus-formatter.svg?branch=master)](https://travis-ci.org/antonfisher/nested-logrus-formatter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/antonfisher/nested-logrus-formatter)](https://goreportcard.com/report/github.com/antonfisher/nested-logrus-formatter)
-[![GoDoc](https://godoc.org/github.com/antonfisher/nested-logrus-formatter?status.svg)](https://godoc.org/github.com/antonfisher/nested-logrus-formatter)
+[![GoDoc](https://godoc.org/github.com/antonfisher/nested-logrus-formatter?status.svg)](https://godoc.org/github.com/aohanhongzhi/nested-logrus-formatter)
+
+## 主要功能
+
+1. 控制台输出与文件写入
+2. 日志文件与行号定位，支持跳转
+2. 支持GORM的日志接管，适配其日志的打印。github. com/aohanhongzhi/gormv2-logrus
+3. 邮件报警
+4. 飞书报警
+5. http机器人报警
+
+### 控制台输出与文件写入
+
+![img.png](assets/log-to-file.png)
+
+
+### 日志文件与行号定位，支持跳转
+
+![img_1.png](assets/file-number-jump.png)
+
+### 支持GORM的日志接管，适配其日志的打印。
+
+这里注意一个点，本来下面这行查询语句并不是日志记录语句，而是通过特殊栈查找，打印的该文件和行号，这样方便GORM定位与调试。
+
+![img_2.png](assets/gorm-location-jump.png)
+
+
+# 代码介绍
 
 Human-readable log formatter, converts _logrus_ fields to a nested structure:
 
@@ -96,7 +123,7 @@ GOPROXY=https://goproxy.io,direct
     nested.LogInit(true)
 ```
 
-![img.png](assets/img.png)
+![img.png](assets/usage.png)
 
 
 ```go
@@ -115,6 +142,8 @@ GOPROXY=https://goproxy.io,direct
 ```
 
 ## 配合gorm使用
+
+github.com/aohanhongzhi/gormv2-logrus
 
 ```go
 	gormLogger := gormv2logrus.NewGormlog(gormv2logrus.WithLogrus(logrus.StandardLogger()))
@@ -141,7 +170,7 @@ GOPROXY=https://goproxy.io,direct
 	Gormdb.AutoMigrate(&model.NPCComputerInfo{})
 ```
 
-# 颜色
+# 输出颜色
 
 ![输入图片说明](assets/log-color.png)
 
@@ -150,4 +179,10 @@ GOPROXY=https://goproxy.io,direct
 ```shell
 git tag v1.3.9
 git push --tags 
+```
+
+# 本地调试
+
+```go.mod
+replace github.com/aohanhongzhi/nested-logrus-formatter => /home/eric/Project/Go/nested-logrus-formatter
 ```
