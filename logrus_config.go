@@ -24,11 +24,15 @@ func LogInit(noConsole bool) io.Writer {
 
 // 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
 func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
+	return LogInitRobotDir(noConsole, robot, appName, ".")
+}
+func LogInitRobotDir(noConsole, robot bool, appName, dir string) io.Writer {
 	AppName = appName
 	// 参考文章 https://juejin.cn/post/7026912807333888014
-	logPath := "./log"
-	warnLogPath := "./log/warn/"
-	errorLogPath := "./log/error/"
+	logPath := filepath.Join(dir, "/log")
+	warnLogPath := filepath.Join(dir, "/log/warn/")
+	errorLogPath := filepath.Join(dir, "/log/error/")
+
 	// FIXME: 这里注意日志文件启动路径会不会随着脚本启动的时候执行目录不一样，日志文件存储也不一样。日志不是与可执行文件同一目录，而是与执行启动目录在一起。
 	if _, err := os.Stat(logPath); os.IsNotExist(err) {
 		err1 := os.MkdirAll(logPath, os.ModePerm)
