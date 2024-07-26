@@ -24,8 +24,11 @@ func LogInit(noConsole bool) io.Writer {
 
 // 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
 func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
+	// 使用 .表示当前路径
 	return LogInitRobotDir(noConsole, robot, appName, ".")
 }
+
+// 支持日志存放位置
 func LogInitRobotDir(noConsole, robot bool, appName, dir string) io.Writer {
 	AppName = appName
 	// 参考文章 https://juejin.cn/post/7026912807333888014
@@ -70,6 +73,7 @@ func LogInitRobotDir(noConsole, robot bool, appName, dir string) io.Writer {
 		CustomCallerFormatter: func(f *runtime.Frame) string {
 			file, line := f.File, f.Line
 			if strings.HasPrefix(f.Function, "github.com/aohanhongzhi/gormv2-logrus") {
+				// gorm框架日志特殊处理
 				_, file1, line1, ok := runtime.Caller(14)
 				if !ok {
 					log.Errorf("获取行号失败 %v,%v", file1, line1)
