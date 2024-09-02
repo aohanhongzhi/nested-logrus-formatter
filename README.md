@@ -175,7 +175,7 @@ github.com/aohanhongzhi/gormv2-logrus
 # 发布
 
 ```shell
-git tag v1.3.9
+git tag v1.5.2
 git push --tags 
 ```
 

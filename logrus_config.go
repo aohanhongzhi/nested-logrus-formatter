@@ -19,24 +19,29 @@ var AppName string
 
 // 考虑单元测试里面的兼容性，所以新增增加的函数名不一样
 func LogInit(noConsole bool) io.Writer {
-	return LogInitRobotDir(noConsole, "go-app", ".")
+	return LogrusInit(noConsole, "go-app", ".", log.InfoLevel)
 }
 
 // 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
 // Deprecated
 func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 	// 使用 .表示当前路径
-	return LogInitRobotDir(noConsole, appName, ".")
+	return LogrusInit(noConsole, appName, ".", log.InfoLevel)
 }
 
 // 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
 func LogInitWithName(noConsole bool, appName string) io.Writer {
 	// 使用 .表示当前路径
-	return LogInitRobotDir(noConsole, appName, ".")
+	return LogrusInit(noConsole, appName, ".", log.InfoLevel)
+}
+
+func LogInitWithLevel(noConsole bool, appName string, level log.Level) io.Writer {
+	// 使用 .表示当前路径
+	return LogrusInit(noConsole, appName, ".", level)
 }
 
 // 支持日志存放位置
-func LogInitRobotDir(noConsole bool, appName, dir string) io.Writer {
+func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer {
 	AppName = appName
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := filepath.Join(dir, "/log")
@@ -67,7 +72,7 @@ func LogInitRobotDir(noConsole bool, appName, dir string) io.Writer {
 	errorlogFilePath := filepath.Join(errorLogPath, "error")
 
 	// 设置项目默认日志级别
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(level)
 
 	log.SetReportCaller(true)
 
