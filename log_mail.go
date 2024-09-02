@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net"
 	"net/mail"
 	"net/smtp"
 	"strconv"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -66,7 +67,7 @@ func NewMailHook(appname string, host string, port int, from string, to string) 
 
 }
 
-// NewMailAuthHook creates a hook to be added to an instance of logger.
+// creates a hook to be added to an instance of logger.
 func NewMailAuthHook(appname string, host string, port int, from string, to string, username string, password string) (*MailAuthHook, error) {
 	// Check if server listens on that port.
 	conn, err := net.DialTimeout("tcp", host+":"+strconv.Itoa(port), 3*time.Second)

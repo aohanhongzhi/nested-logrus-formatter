@@ -19,17 +19,24 @@ var AppName string
 
 // 考虑单元测试里面的兼容性，所以新增增加的函数名不一样
 func LogInit(noConsole bool) io.Writer {
-	return LogInitRobot(noConsole, false, "go-app")
+	return LogInitRobotDir(noConsole, "go-app", ".")
 }
 
 // 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
+// Deprecated
 func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
 	// 使用 .表示当前路径
-	return LogInitRobotDir(noConsole, robot, appName, ".")
+	return LogInitRobotDir(noConsole, appName, ".")
+}
+
+// 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
+func LogInitWithName(noConsole bool, appName string) io.Writer {
+	// 使用 .表示当前路径
+	return LogInitRobotDir(noConsole, appName, ".")
 }
 
 // 支持日志存放位置
-func LogInitRobotDir(noConsole, robot bool, appName, dir string) io.Writer {
+func LogInitRobotDir(noConsole bool, appName, dir string) io.Writer {
 	AppName = appName
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := filepath.Join(dir, "/log")
@@ -176,9 +183,10 @@ func LogInitRobotDir(noConsole, robot bool, appName, dir string) io.Writer {
 	// gin的日志接管
 	// gin.DefaultWriter = multiWriter
 
-	if robot {
-		log.AddHook(NewRobotLogger(appName))
-	}
+	// 日志里面不不建议使用邮箱，如果是网络相关的错误。可能会导致，网络错误->邮件与飞书发送->又到了网络错误。不断地死循环。
+	//if false {
+	//	log.AddHook(NewRobotLogger(appName))
+	//}
 
 	return multiWriter
 }
