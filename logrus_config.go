@@ -53,18 +53,46 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 		err1 := os.MkdirAll(logPath, os.ModePerm)
 		if err1 != nil {
 			log.Errorf("日志文件夹创建失败 %+v", err1)
+			// 当前目录试试
+			logPath = "./log"
+			if _, err := os.Stat(logPath); os.IsNotExist(err) {
+				err1 := os.MkdirAll(logPath, os.ModePerm)
+				if err1 != nil {
+					log.Errorf("当前目录的日志文件夹创建失败 %+v", err1)
+				} else {
+					log.Warnf("指定的日志目录%v 无法新建，创建了当前目录下的日志文件夹", dir)
+				}
+			}
 		}
 	}
 	if _, err := os.Stat(warnLogPath); os.IsNotExist(err) {
 		err1 := os.MkdirAll(warnLogPath, os.ModePerm)
 		if err1 != nil {
 			log.Errorf("Warn日志文件夹创建失败%+v", err1)
+			warnLogPath = "./log/warn/"
+			if _, err := os.Stat(warnLogPath); os.IsNotExist(err) {
+				err1 := os.MkdirAll(warnLogPath, os.ModePerm)
+				if err1 != nil {
+					log.Errorf("当前目录的warn日志文件夹创建失败 %+v", err1)
+				} else {
+					log.Warnf("指定的日志目录%v 无法新建，创建了当前目录下的日志文件夹", dir)
+				}
+			}
 		}
 	}
 	if _, err := os.Stat(errorLogPath); os.IsNotExist(err) {
 		err1 := os.MkdirAll(errorLogPath, os.ModePerm)
 		if err1 != nil {
 			log.Errorf("Error日志文件夹创建失败%+v", err1)
+			errorLogPath = "./log/error/"
+			if _, err := os.Stat(errorLogPath); os.IsNotExist(err) {
+				err1 := os.MkdirAll(errorLogPath, os.ModePerm)
+				if err1 != nil {
+					log.Errorf("当前目录的Error日志文件夹创建失败%+v", err1)
+				} else {
+					log.Warnf("指定的日志目录%v 无法新建，创建了当前目录下的日志文件夹", dir)
+				}
+			}
 		}
 	}
 	logFilePath := filepath.Join(logPath, "go")
