@@ -42,6 +42,8 @@ func LogInitWithLevel(noConsole bool, appName string, level log.Level) io.Writer
 
 // 支持日志存放位置
 func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer {
+	// 设置时区为东八区
+	os.Setenv("TZ", "Asia/Shanghai")
 	AppName = appName
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := filepath.Join(dir, "/log")
