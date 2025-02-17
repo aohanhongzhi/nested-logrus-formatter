@@ -2,16 +2,16 @@ package formatter
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"runtime"
 	"runtime/debug"
 	"strconv"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
-// https://blog.csdn.net/xia_xing/article/details/80597472
-// 异常处理
+// 异常处理 https://blog.csdn.net/xia_xing/article/details/80597472
 func PanicHandler() {
 	errs := recover()
 	if errs == nil {
@@ -27,8 +27,8 @@ func PanicHandler() {
 		now := time.Now()  //获取当前时间
 		pid := os.Getpid() //获取进程ID
 
-		time_str := now.Format("20060102150405")                             //设定时间格式
-		fname := fmt.Sprintf("%s-pid%d-%s-dump.log", exeName, pid, time_str) //保存错误信息文件名:程序名-进程ID-当前时间（年月日时分秒）
+		timeStr := now.Format("20060102150405")                             //设定时间格式
+		fname := fmt.Sprintf("%s-pid%d-%s-dump.log", exeName, pid, timeStr) //保存错误信息文件名:程序名-进程ID-当前时间（年月日时分秒）
 		fmt.Println("dump to file ", fname)
 
 		f, err := os.Create(fname)

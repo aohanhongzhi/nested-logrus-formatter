@@ -16,11 +16,11 @@ import (
 var LatestToken TenantAccessTokenBody // 最新的token
 
 func FeishuRobotDetail(msg string, appName ...string) {
-	go func(msg string, appName ...string) {
-		_, file, line, ok := runtime.Caller(1)
-		if !ok {
-			log.Errorf("获取行号失败 %v,%v", file, line)
-		}
+	_, file, line, ok := runtime.Caller(1)
+	if !ok {
+		log.Errorf("获取行号失败 %v,%v", file, line)
+	}
+	go func(file string, line int, msg string, appName ...string) {
 		timeValue := time.Now().Format("2006-01-02 15:04:05")
 		name, err := os.Hostname()
 		if err != nil {
@@ -31,7 +31,7 @@ func FeishuRobotDetail(msg string, appName ...string) {
 		}
 		content := timeValue + "【" + AppName + "】" + name + "(" + file + ":" + strconv.Itoa(line) + "):" + msg
 		feishuRobot(content)
-	}(msg, appName...)
+	}(file, line, msg, appName...)
 }
 
 // 飞书机器人通知到群里 https://open.feishu.cn/document/server-docs/im-v1/message/create?appId=cli_a1cefb050579500b
@@ -111,10 +111,11 @@ func getTenantAccessToken() (tenantAccessTokenBody TenantAccessTokenBody) {
 		bodyText, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Error(err)
-		}
-		err1 := json.Unmarshal(bodyText, &tenantAccessTokenBody)
-		if err1 != nil {
-			log.Error(err1)
+		} else {
+			err1 := json.Unmarshal(bodyText, &tenantAccessTokenBody)
+			if err1 != nil {
+				log.Error(err1)
+			}
 		}
 		tenantAccessTokenBody.RequestTime = time.Now()
 	}
