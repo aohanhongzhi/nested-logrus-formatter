@@ -47,59 +47,25 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 	AppName = appName
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := filepath.Join(dir, "/log")
+	debugLogPath := filepath.Join(dir, "/log/debug/")
+	infoLogPath := filepath.Join(dir, "/log/info/")
 	warnLogPath := filepath.Join(dir, "/log/warn/")
 	errorLogPath := filepath.Join(dir, "/log/error/")
+	panicLogPath := filepath.Join(dir, "/log/panic/")
 
-	// FIXME: 这里注意日志文件启动路径会不会随着脚本启动的时候执行目录不一样，日志文件存储也不一样。日志不是与可执行文件同一目录，而是与执行启动目录在一起。
-	if _, err := os.Stat(logPath); os.IsNotExist(err) {
-		err1 := os.MkdirAll(logPath, os.ModePerm)
-		if err1 != nil {
-			log.Errorf("日志文件夹创建失败 %+v", err1)
-			// 当前目录试试
-			logPath = "./log"
-			if _, err := os.Stat(logPath); os.IsNotExist(err) {
-				err1 := os.MkdirAll(logPath, os.ModePerm)
-				if err1 != nil {
-					log.Errorf("当前目录的日志文件夹创建失败 %+v", err1)
-				} else {
-					log.Warnf("指定的日志目录%v 无法新建，创建了当前目录下的日志文件夹", dir)
-				}
-			}
-		}
-	}
-	if _, err := os.Stat(warnLogPath); os.IsNotExist(err) {
-		err1 := os.MkdirAll(warnLogPath, os.ModePerm)
-		if err1 != nil {
-			log.Errorf("Warn日志文件夹创建失败%+v", err1)
-			warnLogPath = "./log/warn/"
-			if _, err := os.Stat(warnLogPath); os.IsNotExist(err) {
-				err1 := os.MkdirAll(warnLogPath, os.ModePerm)
-				if err1 != nil {
-					log.Errorf("当前目录的warn日志文件夹创建失败 %+v", err1)
-				} else {
-					log.Warnf("指定的日志目录%v 无法新建，创建了当前目录下的日志文件夹", dir)
-				}
-			}
-		}
-	}
-	if _, err := os.Stat(errorLogPath); os.IsNotExist(err) {
-		err1 := os.MkdirAll(errorLogPath, os.ModePerm)
-		if err1 != nil {
-			log.Errorf("Error日志文件夹创建失败%+v", err1)
-			errorLogPath = "./log/error/"
-			if _, err := os.Stat(errorLogPath); os.IsNotExist(err) {
-				err1 := os.MkdirAll(errorLogPath, os.ModePerm)
-				if err1 != nil {
-					log.Errorf("当前目录的Error日志文件夹创建失败%+v", err1)
-				} else {
-					log.Warnf("指定的日志目录%v 无法新建，创建了当前目录下的日志文件夹", dir)
-				}
-			}
-		}
-	}
-	logFilePath := filepath.Join(logPath, "go")
-	warnlogFilePath := filepath.Join(warnLogPath, "warn")
-	errorlogFilePath := filepath.Join(errorLogPath, "error")
+	MkLogdir(logPath)
+	MkLogdir(debugLogPath)
+	MkLogdir(infoLogPath)
+	MkLogdir(warnLogPath)
+	MkLogdir(errorLogPath)
+	MkLogdir(panicLogPath)
+
+	logFileName := filepath.Join(logPath, "all")
+	debugLogFileName := filepath.Join(debugLogPath, "debug")
+	infoLogFileName := filepath.Join(infoLogPath, "info")
+	warnlogFileName := filepath.Join(warnLogPath, "warn")
+	errorlogFileName := filepath.Join(errorLogPath, "error")
+	paniclogFileName := filepath.Join(panicLogPath, "panic")
 
 	// 设置项目默认日志级别
 	log.SetLevel(level)
@@ -149,30 +115,56 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 		},
 	}
 
+	var rotationSize int64 = 20 * 1024 * 1024
+
 	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。
 	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
 	writer, _ := rotatelogs.New(
-		logFilePath+"-%Y%m%d%H%M.log",
+		logFileName+"-%Y%m%d%H%M.log",
 		//rotatelogs.WithLinkName(logFilePath),
 		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
 		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(10*1024*1024), //设置10MB大小,当大于这个容量时，创建新的日志文件
+		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
+	)
+
+	debugWriter, _ := rotatelogs.New(
+		debugLogFileName+"-%Y%m%d%H%M.log",
+		//rotatelogs.WithLinkName(logFilePath),
+		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
+		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
+		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
+	)
+
+	infoWriter, _ := rotatelogs.New(
+		infoLogFileName+"-%Y%m%d%H%M.log",
+		//rotatelogs.WithLinkName(logFilePath),
+		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
+		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
+		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
 	)
 
 	warnWriter, _ := rotatelogs.New(
-		warnlogFilePath+"-%Y%m%d%H%M.log",
+		warnlogFileName+"-%Y%m%d%H%M.log",
 		//rotatelogs.WithLinkName(logFilePath),
 		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
 		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(10*1024*1024), //设置10MB大小,当大于这个容量时，创建新的日志文件
+		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
 	)
 
 	errorWriter, _ := rotatelogs.New(
-		errorlogFilePath+"-%Y%m%d%H%M.log",
+		errorlogFileName+"-%Y%m%d%H%M.log",
 		//rotatelogs.WithLinkName(logFilePath),
 		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
 		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(10*1024*1024), //设置10MB大小,当大于这个容量时，创建新的日志文件
+		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
+	)
+
+	panicWriter, _ := rotatelogs.New(
+		paniclogFileName+"-%Y%m%d%H%M.log",
+		//rotatelogs.WithLinkName(logFilePath),
+		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
+		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
+		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
 	)
 
 	writers := []io.Writer{writer, errorWriter}
@@ -185,15 +177,30 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 		log.InfoLevel:  writer,
 		log.WarnLevel:  writer,
 		log.ErrorLevel: allLevelWriter,
-		log.FatalLevel: allLevelWriter,
 		log.PanicLevel: allLevelWriter,
+		log.FatalLevel: allLevelWriter,
 	}, fileFormatter)
 	log.AddHook(lfHook) // 输出到log文件夹（一定会输出）
+
+	debuglfHook := lfshook.NewHook(lfshook.WriterMap{
+		log.DebugLevel: debugWriter,
+	}, fileFormatter)
+	log.AddHook(debuglfHook) // 输出到log文件夹（一定会输出）
+
+	infolfHook := lfshook.NewHook(lfshook.WriterMap{
+		log.InfoLevel: infoWriter,
+	}, fileFormatter)
+	log.AddHook(infolfHook) // 输出到log文件夹（一定会输出）
 
 	warnlfHook := lfshook.NewHook(lfshook.WriterMap{
 		log.WarnLevel: warnWriter,
 	}, fileFormatter)
 	log.AddHook(warnlfHook) // 输出到log文件夹（一定会输出）
+
+	paniclfHook := lfshook.NewHook(lfshook.WriterMap{
+		log.PanicLevel: panicWriter,
+	}, fileFormatter)
+	log.AddHook(paniclfHook) // 输出到log文件夹（一定会输出）
 
 	fileWriter := &lumberjack.Logger{
 		Filename:   "all.log",
@@ -224,4 +231,23 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 	//}
 
 	return multiWriter
+}
+
+// FIXME: 这里注意日志文件启动路径会不会随着脚本启动的时候执行目录不一样，日志文件存储也不一样。日志不是与可执行文件同一目录，而是与执行启动目录在一起。
+func MkLogdir(logPath string) {
+	if _, err := os.Stat(logPath); os.IsNotExist(err) {
+		err1 := os.MkdirAll(logPath, os.ModePerm)
+		if err1 != nil {
+			log.Errorf("%v日志文件夹创建失败%+v", logPath, err1)
+			logPath = "." + logPath // 表示建在当前目录下
+			if _, err := os.Stat(logPath); os.IsNotExist(err) {
+				err1 := os.MkdirAll(logPath, os.ModePerm)
+				if err1 != nil {
+					log.Errorf("当前目录的日志文件夹[%v]创建失败 %+v", logPath, err1)
+				} else {
+					log.Warnf("指定的日志目录%v 无法新建，创建了当前目录下的日志文件夹", logPath)
+				}
+			}
+		}
+	}
 }
