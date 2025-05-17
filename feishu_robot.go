@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 var LatestToken TenantAccessTokenBody // 最新的token
@@ -18,13 +18,13 @@ var LatestToken TenantAccessTokenBody // 最新的token
 func FeishuRobotDetail(msg string, appName ...string) {
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
-		log.Errorf("获取行号失败 %v,%v", file, line)
+		logrus.Errorf("获取行号失败 %v,%v", file, line)
 	}
 	go func(file string, line int, msg string, appName ...string) {
 		timeValue := time.Now().Format("2006-01-02 15:04:05")
 		name, err := os.Hostname()
 		if err != nil {
-			log.Errorf("获取主机名失败 %+v", err)
+			logrus.Errorf("获取主机名失败 %+v", err)
 		}
 		if appName != nil && len(appName) > 0 {
 			AppName = appName[0]
@@ -60,26 +60,26 @@ func feishuRobot(textContent string) {
 }`)
 		req, err := http.NewRequest(http.MethodPost, "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id", data)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 		}
 		req.Header.Set("Authorization", "Bearer "+LatestToken.TenantAccessToken)
 		req.Header.Set("Content-Type", "application/json; charset=utf-8")
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 		}
 		if resp != nil {
 			defer resp.Body.Close()
 			bodyText, err := io.ReadAll(resp.Body)
 			if err != nil {
-				log.Error(err)
+				logrus.Error(err)
 			}
-			log.Printf("飞书请求结果%s，参数 %v", bodyText, content)
+			logrus.Printf("飞书请求结果%s，参数 %v", bodyText, content)
 		} else {
-			log.Errorf("请求飞书错误， %v", textContent)
+			logrus.Errorf("请求飞书错误， %v", textContent)
 		}
 	} else {
-		log.Errorf("飞书机器人发送消息错误 %v", textContent)
+		logrus.Errorf("飞书机器人发送消息错误 %v", textContent)
 	}
 }
 
@@ -99,22 +99,22 @@ func getTenantAccessToken() (tenantAccessTokenBody TenantAccessTokenBody) {
 }`)
 	req, err := http.NewRequest(http.MethodPost, "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal", data)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error(err)
+		logrus.Error(err)
 	}
 	defer resp.Body.Close()
 	if resp != nil {
 		bodyText, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 		} else {
 			err1 := json.Unmarshal(bodyText, &tenantAccessTokenBody)
 			if err1 != nil {
-				log.Error(err1)
+				logrus.Error(err1)
 			}
 		}
 		tenantAccessTokenBody.RequestTime = time.Now()

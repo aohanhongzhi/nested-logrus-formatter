@@ -12,36 +12,11 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/natefinch/lumberjack"
 	"github.com/rifflock/lfshook"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
-var AppName string
-
-// 考虑单元测试里面的兼容性，所以新增增加的函数名不一样
-func LogInit(noConsole bool) io.Writer {
-	return LogrusInit(noConsole, "go-app", ".", log.InfoLevel)
-}
-
-// 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
-// Deprecated
-func LogInitRobot(noConsole, robot bool, appName string) io.Writer {
-	// 使用 .表示当前路径
-	return LogrusInit(noConsole, appName, ".", log.InfoLevel)
-}
-
-// 本配置处理了三个日志输出，1. 控制台（二选一） 2. all.log 所有日志 （二选一） 3. log文件夹下面的分级日志（一定会输出）
-func LogInitWithName(noConsole bool, appName string) io.Writer {
-	// 使用 .表示当前路径
-	return LogrusInit(noConsole, appName, ".", log.InfoLevel)
-}
-
-func LogInitWithLevel(noConsole bool, appName string, level log.Level) io.Writer {
-	// 使用 .表示当前路径
-	return LogrusInit(noConsole, appName, ".", level)
-}
-
 // 支持日志存放位置
-func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer {
+func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserveDuration time.Duration, rotationSize int64) io.Writer {
 	// 设置时区为东八区
 	os.Setenv("TZ", "Asia/Shanghai")
 	AppName = appName
@@ -53,6 +28,7 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 	errorLogPath := filepath.Join(dir, "/log/error/")
 	panicLogPath := filepath.Join(dir, "/log/panic/")
 
+	// TODO 等待有对应日志的时候再生成对应文件夹比较好
 	MkLogdir(logPath)
 	MkLogdir(debugLogPath)
 	MkLogdir(infoLogPath)
@@ -68,9 +44,9 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 	paniclogFileName := filepath.Join(panicLogPath, "panic")
 
 	// 设置项目默认日志级别
-	log.SetLevel(level)
+	logrus.SetLevel(level)
 
-	log.SetReportCaller(true)
+	logrus.SetReportCaller(true)
 
 	fileFormatter := &Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
@@ -84,7 +60,7 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 				// gorm框架日志特殊处理
 				_, file1, line1, ok := runtime.Caller(14)
 				if !ok {
-					log.Errorf("获取行号失败 %v,%v", file1, line1)
+					logrus.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
 				//sprintf := fmt.Sprintf(" fileFormatter (%s:%d) => (%s:%d)", file1, line1, file, line)
 				//println(sprintf)
@@ -105,7 +81,7 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 			if strings.HasPrefix(f.Function, "github.com/aohanhongzhi/gormv2-logrus") {
 				_, file1, line1, ok := runtime.Caller(11)
 				if !ok {
-					log.Errorf("获取行号失败 %v,%v", file1, line1)
+					logrus.Errorf("获取行号失败 %v,%v", file1, line1)
 				}
 				//sprintf := fmt.Sprintf(" stdoutFormatter (%s:%d) => (%s:%d)", file1, line1, file, line)
 				//println(sprintf)
@@ -115,14 +91,12 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 		},
 	}
 
-	var rotationSize int64 = 20 * 1024 * 1024
-
 	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。
 	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
 	writer, _ := rotatelogs.New(
 		logFileName+"-%Y%m%d%H%M.log",
 		//rotatelogs.WithLinkName(logFilePath),
-		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
+		rotatelogs.WithMaxAge(reserveDuration), //保留最近 3 天的日志文件，多余的自动清理掉
 		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
 		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
 	)
@@ -173,81 +147,54 @@ func LogrusInit(noConsole bool, appName, dir string, level log.Level) io.Writer 
 	allLevelWriter := io.MultiWriter(writers...)
 
 	lfHook := lfshook.NewHook(lfshook.WriterMap{
-		log.DebugLevel: writer, // 为不同级别设置不同的输出目的
-		log.InfoLevel:  writer,
-		log.WarnLevel:  writer,
-		log.ErrorLevel: allLevelWriter,
-		log.PanicLevel: allLevelWriter,
-		log.FatalLevel: allLevelWriter,
+		logrus.DebugLevel: writer, // 为不同级别设置不同的输出目的
+		logrus.InfoLevel:  writer,
+		logrus.WarnLevel:  writer,
+		logrus.ErrorLevel: allLevelWriter,
+		logrus.PanicLevel: allLevelWriter,
+		logrus.FatalLevel: allLevelWriter,
 	}, fileFormatter)
-	log.AddHook(lfHook) // 输出到log文件夹（一定会输出）
+	logrus.AddHook(lfHook) // 输出到log文件夹（一定会输出）
 
 	debuglfHook := lfshook.NewHook(lfshook.WriterMap{
-		log.DebugLevel: debugWriter,
+		logrus.DebugLevel: debugWriter,
 	}, fileFormatter)
-	log.AddHook(debuglfHook) // 输出到log文件夹（一定会输出）
+	logrus.AddHook(debuglfHook) // 输出到log文件夹（一定会输出）
 
 	infolfHook := lfshook.NewHook(lfshook.WriterMap{
-		log.InfoLevel: infoWriter,
+		logrus.InfoLevel: infoWriter,
 	}, fileFormatter)
-	log.AddHook(infolfHook) // 输出到log文件夹（一定会输出）
+	logrus.AddHook(infolfHook) // 输出到log文件夹（一定会输出）
 
 	warnlfHook := lfshook.NewHook(lfshook.WriterMap{
-		log.WarnLevel: warnWriter,
+		logrus.WarnLevel: warnWriter,
 	}, fileFormatter)
-	log.AddHook(warnlfHook) // 输出到log文件夹（一定会输出）
+	logrus.AddHook(warnlfHook) // 输出到log文件夹（一定会输出）
 
 	paniclfHook := lfshook.NewHook(lfshook.WriterMap{
-		log.PanicLevel: panicWriter,
+		logrus.PanicLevel: panicWriter,
 	}, fileFormatter)
-	log.AddHook(paniclfHook) // 输出到log文件夹（一定会输出）
+	logrus.AddHook(paniclfHook) // 输出到log文件夹（一定会输出）
+
+	// 下面是另一个日志文件处理方式
 
 	fileWriter := &lumberjack.Logger{
 		Filename:   "all.log",
-		MaxSize:    50, // megabytes
+		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
 		MaxBackups: 2,
-		MaxAge:     2,    //days
-		Compress:   true, // disabled by default
+		MaxAge:     int(reserveDuration.Hours() / 24), //days
+		Compress:   true,                              // disabled by default
 	}
 
 	var multiWriter io.Writer
 	if noConsole {
 		multiWriter = io.MultiWriter(fileWriter) // 覆盖上面的控制台输出
-		log.SetFormatter(fileFormatter)
+		logrus.SetFormatter(fileFormatter)
 	} else {
 		// 控制台和文件都有，因为有时候控制台看起来麻烦，一旦重启就没了，所以还是需要持久化存储
 		multiWriter = io.MultiWriter(os.Stdout, fileWriter) // 控制台+文件持久化
-		log.SetFormatter(stdoutFormatter)
+		logrus.SetFormatter(stdoutFormatter)
 	}
-	log.SetOutput(multiWriter)
-	// log.SetOutput(os.Stdout) // 直接输出控制台
-
-	// gin的日志接管
-	// gin.DefaultWriter = multiWriter
-
-	// 日志里面不不建议使用邮箱，如果是网络相关的错误。可能会导致，网络错误->邮件与飞书发送->又到了网络错误。不断地死循环。
-	//if false {
-	//	log.AddHook(NewRobotLogger(appName))
-	//}
-
+	logrus.SetOutput(multiWriter)
 	return multiWriter
-}
-
-// FIXME: 这里注意日志文件启动路径会不会随着脚本启动的时候执行目录不一样，日志文件存储也不一样。日志不是与可执行文件同一目录，而是与执行启动目录在一起。
-func MkLogdir(logPath string) {
-	if _, err := os.Stat(logPath); os.IsNotExist(err) {
-		err1 := os.MkdirAll(logPath, os.ModePerm)
-		if err1 != nil {
-			log.Errorf("%v日志文件夹创建失败%+v", logPath, err1)
-			logPath = "." + logPath // 表示建在当前目录下
-			if _, err := os.Stat(logPath); os.IsNotExist(err) {
-				err1 := os.MkdirAll(logPath, os.ModePerm)
-				if err1 != nil {
-					log.Errorf("当前目录的日志文件夹[%v]创建失败 %+v", logPath, err1)
-				} else {
-					log.Warnf("指定的日志目录%v 无法新建，创建了当前目录下的日志文件夹", logPath)
-				}
-			}
-		}
-	}
 }
