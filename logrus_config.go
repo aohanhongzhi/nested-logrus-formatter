@@ -181,9 +181,9 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	fileWriter := &lumberjack.Logger{
 		Filename:   "all.log",
 		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
-		MaxBackups: 2,
-		MaxAge:     int(reserveDuration.Hours() / 24), //days
-		Compress:   true,                              // disabled by default
+		MaxBackups: 2,                                 // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
+		MaxAge:     int(reserveDuration.Hours() / 24), // days
+		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
 	}
 
 	var multiWriter io.Writer
