@@ -91,16 +91,17 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 		},
 	}
 
-	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。
-	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
-	writer, _ := rotatelogs.New(
-		logFileName+"-%Y%m%d%H%M.log",
-		//rotatelogs.WithLinkName(logFilePath),
-		rotatelogs.WithMaxAge(reserveDuration), //保留最近 3 天的日志文件，多余的自动清理掉
-		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
-	)
+	// 开始弃用 rotatelogs ，使用 lumberjack
+	writer := &lumberjack.Logger{
+		Filename:   logFileName + "-%Y%m%d%H%M.log",
+		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
+		MaxBackups: 3,                                 // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
+		MaxAge:     int(reserveDuration.Hours() / 24), // days
+		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
+	}
 
+	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。 实际上没有清理
+	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
 	debugWriter, _ := rotatelogs.New(
 		debugLogFileName+"-%Y%m%d%H%M.log",
 		//rotatelogs.WithLinkName(logFilePath),
@@ -109,13 +110,14 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
 	)
 
-	infoWriter, _ := rotatelogs.New(
-		infoLogFileName+"-%Y%m%d%H%M.log",
-		//rotatelogs.WithLinkName(logFilePath),
-		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
-		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
-	)
+	// 开始弃用 rotatelogs ，使用 lumberjack
+	infoWriter := &lumberjack.Logger{
+		Filename:   infoLogFileName + "-%Y%m%d%H%M.log",
+		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
+		MaxBackups: 3,                                 // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
+		MaxAge:     int(reserveDuration.Hours() / 24), // days
+		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
+	}
 
 	warnWriter, _ := rotatelogs.New(
 		warnlogFileName+"-%Y%m%d%H%M.log",
@@ -147,6 +149,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	allLevelWriter := io.MultiWriter(writers...)
 
 	lfHook := lfshook.NewHook(lfshook.WriterMap{
+		logrus.TraceLevel: writer, // 为不同级别设置不同的输出目的
 		logrus.DebugLevel: writer, // 为不同级别设置不同的输出目的
 		logrus.InfoLevel:  writer,
 		logrus.WarnLevel:  writer,
