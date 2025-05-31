@@ -93,7 +93,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 
 	// 开始弃用 rotatelogs ，使用 lumberjack
 	writer := &lumberjack.Logger{
-		Filename:   logFileName + "-%Y%m%d%H%M.log",
+		Filename:   logFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
 		MaxBackups: 3,                                 // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
 		MaxAge:     int(reserveDuration.Hours() / 24), // days
@@ -112,7 +112,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 
 	// 开始弃用 rotatelogs ，使用 lumberjack
 	infoWriter := &lumberjack.Logger{
-		Filename:   infoLogFileName + "-%Y%m%d%H%M.log",
+		Filename:   infoLogFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
 		MaxBackups: 3,                                 // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
 		MaxAge:     int(reserveDuration.Hours() / 24), // days
