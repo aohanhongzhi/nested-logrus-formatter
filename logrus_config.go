@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/natefinch/lumberjack"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
@@ -102,13 +101,13 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 
 	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。 实际上没有清理
 	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
-	debugWriter, _ := rotatelogs.New(
-		debugLogFileName+"-%Y%m%d%H%M.log",
-		//rotatelogs.WithLinkName(logFilePath),
-		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
-		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
-	)
+	debugWriter := &lumberjack.Logger{
+		Filename:   debugLogFileName + ".log",
+		MaxSize:    int(rotationSize) / (1024 * 1024),
+		MaxBackups: 3,
+		MaxAge:     int(reserveDuration.Hours() / 24),
+		Compress:   true,
+	}
 
 	// 开始弃用 rotatelogs ，使用 lumberjack
 	infoWriter := &lumberjack.Logger{
@@ -119,29 +118,29 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
 	}
 
-	warnWriter, _ := rotatelogs.New(
-		warnlogFileName+"-%Y%m%d%H%M.log",
-		//rotatelogs.WithLinkName(logFilePath),
-		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
-		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
-	)
+	warnWriter := &lumberjack.Logger{
+		Filename:   warnlogFileName + ".log",
+		MaxSize:    int(rotationSize) / (1024 * 1024),
+		MaxBackups: 3,
+		MaxAge:     int(reserveDuration.Hours() / 24),
+		Compress:   true,
+	}
 
-	errorWriter, _ := rotatelogs.New(
-		errorlogFileName+"-%Y%m%d%H%M.log",
-		//rotatelogs.WithLinkName(logFilePath),
-		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
-		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
-	)
+	errorWriter := &lumberjack.Logger{
+		Filename:   errorlogFileName + ".log",
+		MaxSize:    int(rotationSize) / (1024 * 1024),
+		MaxBackups: 3,
+		MaxAge:     int(reserveDuration.Hours() / 24),
+		Compress:   true,
+	}
 
-	panicWriter, _ := rotatelogs.New(
-		paniclogFileName+"-%Y%m%d%H%M.log",
-		//rotatelogs.WithLinkName(logFilePath),
-		rotatelogs.WithMaxAge(time.Duration(72)*time.Hour), //保留最近 3 天的日志文件，多余的自动清理掉
-		//rotatelogs.WithRotationTime(time.Duration(6)*time.Hour), // 每隔 6小时轮转一个新文件
-		rotatelogs.WithRotationSize(rotationSize), //设置10MB大小,当大于这个容量时，创建新的日志文件
-	)
+	panicWriter := &lumberjack.Logger{
+		Filename:   paniclogFileName + ".log",
+		MaxSize:    int(rotationSize) / (1024 * 1024),
+		MaxBackups: 3,
+		MaxAge:     int(reserveDuration.Hours() / 24),
+		Compress:   true,
+	}
 
 	writers := []io.Writer{writer, errorWriter}
 
