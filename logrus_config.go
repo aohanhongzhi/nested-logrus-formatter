@@ -7,12 +7,103 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/natefinch/lumberjack"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 )
+
+// AsyncHook 是一个异步的logrus hook，用于避免日志写入阻塞主程序
+type AsyncHook struct {
+	hook     logrus.Hook
+	levels   []logrus.Level
+	ch       chan *logrus.Entry
+	wg       sync.WaitGroup
+	mu       sync.Mutex
+	bufSize  int
+	shutdown bool
+}
+
+// NewAsyncHook 创建一个新的AsyncHook
+func NewAsyncHook(hook logrus.Hook, bufSize int) *AsyncHook {
+	levels := hook.Levels()
+	h := &AsyncHook{
+		hook:    hook,
+		levels:  levels,
+		ch:      make(chan *logrus.Entry, bufSize),
+		bufSize: bufSize,
+	}
+
+	h.wg.Add(1)
+	go h.processLogs()
+	return h
+}
+
+// Levels 返回此Hook处理的日志级别
+func (h *AsyncHook) Levels() []logrus.Level {
+	return h.levels
+}
+
+// Fire 实现Hook接口，将日志条目发送到异步处理通道
+func (h *AsyncHook) Fire(entry *logrus.Entry) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if h.shutdown {
+		return nil
+	}
+
+	// 制作日志条目的副本，因为entry在Fire返回后可能会被复用
+	copiedEntry := &logrus.Entry{
+		Logger:  entry.Logger,
+		Data:    make(logrus.Fields, len(entry.Data)),
+		Time:    entry.Time,
+		Level:   entry.Level,
+		Message: entry.Message,
+	}
+
+	for k, v := range entry.Data {
+		copiedEntry.Data[k] = v
+	}
+
+	if entry.Caller != nil {
+		caller := *(entry.Caller)
+		copiedEntry.Caller = &caller
+	}
+
+	// 非阻塞发送，如果通道已满则丢弃
+	select {
+	case h.ch <- copiedEntry:
+		// 成功发送
+	default:
+		// 通道已满，丢弃此日志（可选择记录警告消息）
+		// fmt.Fprintf(os.Stderr, "AsyncHook channel is full, dropping log entry\n")
+	}
+
+	return nil
+}
+
+// processLogs 在后台goroutine中处理日志条目
+func (h *AsyncHook) processLogs() {
+	defer h.wg.Done()
+
+	for entry := range h.ch {
+		if err := h.hook.Fire(entry); err != nil {
+			fmt.Fprintf(os.Stderr, "Error processing log in AsyncHook: %v\n", err)
+		}
+	}
+}
+
+// Flush 等待所有日志条目被处理
+func (h *AsyncHook) Flush() {
+	h.mu.Lock()
+	h.shutdown = true
+	close(h.ch)
+	h.mu.Unlock()
+	h.wg.Wait()
+}
 
 // 支持日志存放位置
 func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserveDuration time.Duration, rotationSize int64) io.Writer {
@@ -158,25 +249,34 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	}, fileFormatter)
 	logrus.AddHook(lfHook) // 输出到log文件夹（一定会输出）
 
+	// 为Debug级别使用异步Hook，避免阻塞主程序
 	debuglfHook := lfshook.NewHook(lfshook.WriterMap{
 		logrus.DebugLevel: debugWriter,
 	}, fileFormatter)
-	logrus.AddHook(debuglfHook) // 输出到log文件夹（一定会输出）
+	// 创建异步Hook，缓冲区大小为1000条日志
+	asyncDebugHook := NewAsyncHook(debuglfHook, 1000)
+	logrus.AddHook(asyncDebugHook)    // 输出到log文件夹（以异步方式）
+	RegisterAsyncHook(asyncDebugHook) // 注册到全局异步Hook列表中，确保程序退出时能刷新日志
 
+	// 其他级别日志也可以考虑使用异步Hook
 	infolfHook := lfshook.NewHook(lfshook.WriterMap{
 		logrus.InfoLevel: infoWriter,
 	}, fileFormatter)
-	logrus.AddHook(infolfHook) // 输出到log文件夹（一定会输出）
+	asyncInfoHook := NewAsyncHook(infolfHook, 1000)
+	logrus.AddHook(asyncInfoHook)    // 输出到log文件夹（以异步方式）
+	RegisterAsyncHook(asyncInfoHook) // 注册到全局异步Hook列表中
 
 	warnlfHook := lfshook.NewHook(lfshook.WriterMap{
 		logrus.WarnLevel: warnWriter,
 	}, fileFormatter)
-	logrus.AddHook(warnlfHook) // 输出到log文件夹（一定会输出）
+	asyncWarnHook := NewAsyncHook(warnlfHook, 500)
+	logrus.AddHook(asyncWarnHook)    // 输出到log文件夹（以异步方式）
+	RegisterAsyncHook(asyncWarnHook) // 注册到全局异步Hook列表中
 
 	paniclfHook := lfshook.NewHook(lfshook.WriterMap{
 		logrus.PanicLevel: panicWriter,
 	}, fileFormatter)
-	logrus.AddHook(paniclfHook) // 输出到log文件夹（一定会输出）
+	logrus.AddHook(paniclfHook) // panic级别保持同步处理，确保立即响应
 
 	// 下面是另一个日志文件处理方式
 
