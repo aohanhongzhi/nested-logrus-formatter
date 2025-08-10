@@ -26,7 +26,7 @@ func FeishuRobotDetail(msg string, appName ...string) {
 		if err != nil {
 			logrus.Errorf("获取主机名失败 %+v", err)
 		}
-		if appName != nil && len(appName) > 0 {
+		if len(appName) > 0 {
 			AppName = appName[0]
 		}
 		content := timeValue + "【" + AppName + "】" + name + "(" + file + ":" + strconv.Itoa(line) + "):" + msg
@@ -52,7 +52,7 @@ func feishuRobot(textContent string) {
 		//timeValue := time.Now().Format("2006-01-02 15:04:05")
 		//content := timeValue + ",kuaima-express," + GetHostName() + ":" + textContent
 		content := textContent
-		client := &http.Client{}
+		client := &http.Client{Timeout: 5 * time.Second}
 		var data = strings.NewReader(`{
     "receive_id": "oc_0dcaa407df30d1a3415c382e397dcd0f",
     "msg_type": "text",
@@ -67,6 +67,7 @@ func feishuRobot(textContent string) {
 		resp, err := client.Do(req)
 		if err != nil {
 			logrus.Error(err)
+			return
 		}
 		if resp != nil {
 			defer resp.Body.Close()
@@ -92,7 +93,7 @@ type TenantAccessTokenBody struct {
 }
 
 func getTenantAccessToken() (tenantAccessTokenBody TenantAccessTokenBody) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 5 * time.Second}
 	var data = strings.NewReader(`{
 	"app_id": "cli_a1cefb050579500b",
 	"app_secret": "PAtVnWyuRQTyRRQ1EpHQ9fnAevpYGkkV"
@@ -105,6 +106,7 @@ func getTenantAccessToken() (tenantAccessTokenBody TenantAccessTokenBody) {
 	resp, err := client.Do(req)
 	if err != nil {
 		logrus.Error(err)
+		return
 	}
 	defer resp.Body.Close()
 	if resp != nil {

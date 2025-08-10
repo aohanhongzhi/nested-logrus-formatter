@@ -110,7 +110,7 @@ func (h *AsyncHook) Flush() {
 }
 
 // 支持日志存放位置
-func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserveDuration time.Duration, rotationSize int64) io.Writer {
+func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserveDuration time.Duration, rotationSize int64, maxBackups int) io.Writer {
 	// 设置时区为东八区
 	os.Setenv("TZ", "Asia/Shanghai")
 	AppName = appName
@@ -188,7 +188,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	writer := &lumberjack.Logger{
 		Filename:   logFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
-		MaxBackups: 3,                                 // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
+		MaxBackups: maxBackups,                        // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
 		MaxAge:     int(reserveDuration.Hours() / 24), // days
 		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
 	}
@@ -198,7 +198,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	debugWriter := &lumberjack.Logger{
 		Filename:   debugLogFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024),
-		MaxBackups: 3,
+		MaxBackups: maxBackups,
 		MaxAge:     int(reserveDuration.Hours() / 24),
 		Compress:   true,
 	}
@@ -206,7 +206,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	infoWriter := &lumberjack.Logger{
 		Filename:   infoLogFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
-		MaxBackups: 3,                                 // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
+		MaxBackups: maxBackups,                        // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
 		MaxAge:     int(reserveDuration.Hours() / 24), // days
 		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
 	}
@@ -214,7 +214,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	warnWriter := &lumberjack.Logger{
 		Filename:   warnlogFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024),
-		MaxBackups: 3,
+		MaxBackups: maxBackups,
 		MaxAge:     int(reserveDuration.Hours() / 24),
 		Compress:   true,
 	}
@@ -222,7 +222,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	errorWriter := &lumberjack.Logger{
 		Filename:   errorlogFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024),
-		MaxBackups: 3,
+		MaxBackups: maxBackups,
 		MaxAge:     int(reserveDuration.Hours() / 24),
 		Compress:   true,
 	}
@@ -230,7 +230,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	panicWriter := &lumberjack.Logger{
 		Filename:   paniclogFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024),
-		MaxBackups: 3,
+		MaxBackups: maxBackups,
 		MaxAge:     int(reserveDuration.Hours() / 24),
 		Compress:   true,
 	}
@@ -285,7 +285,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	fileWriter := &lumberjack.Logger{
 		Filename:   "all.log",
 		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
-		MaxBackups: 2,                                 // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
+		MaxBackups: maxBackups,                        // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
 		MaxAge:     int(reserveDuration.Hours() / 24), // days
 		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
 	}

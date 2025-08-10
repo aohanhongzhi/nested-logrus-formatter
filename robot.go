@@ -133,7 +133,7 @@ func SendRobotMessage(content string, talkType, ReceiverId, RobotId int) {
 
 }
 
-var jtClient = &http.Client{}
+var jtClient = &http.Client{Timeout: 5 * time.Second}
 
 func RequestJson(method string, url string, paramBody io.Reader, headerMap map[string]string) {
 	req, err := http.NewRequest(method, url, paramBody)
@@ -152,11 +152,12 @@ func RequestJson(method string, url string, paramBody io.Reader, headerMap map[s
 		}
 	}
 
-	_, err = jtClient.Do(req)
+	resp, err := jtClient.Do(req)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-
-	return
+	defer resp.Body.Close()
+	// Drain and discard the body to allow connection reuse
+	_, _ = io.Copy(io.Discard, resp.Body)
 }
