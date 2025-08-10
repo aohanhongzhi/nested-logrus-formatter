@@ -23,10 +23,14 @@ func RegisterAsyncHook(hook *AsyncHook) {
 // FlushAsyncHooks 刷新所有异步Hook中的日志
 func FlushAsyncHooks() {
 	asyncHookMutex.Lock()
-	defer asyncHookMutex.Unlock()
+	hooks := make([]*AsyncHook, len(asyncHooks))
+	copy(hooks, asyncHooks)
+	asyncHookMutex.Unlock()
 
-	for _, hook := range asyncHooks {
-		hook.Flush()
+	for _, hook := range hooks {
+		if hook != nil {
+			hook.Flush()
+		}
 	}
 }
 

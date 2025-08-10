@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/natefinch/lumberjack"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // AsyncHook 是一个异步的logrus hook，用于避免日志写入阻塞主程序
@@ -99,6 +99,10 @@ func (h *AsyncHook) processLogs() {
 // Flush 等待所有日志条目被处理
 func (h *AsyncHook) Flush() {
 	h.mu.Lock()
+	if h.shutdown {
+		h.mu.Unlock()
+		return
+	}
 	h.shutdown = true
 	close(h.ch)
 	h.mu.Unlock()
@@ -181,7 +185,6 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 		},
 	}
 
-	// 开始弃用 rotatelogs ，使用 lumberjack
 	writer := &lumberjack.Logger{
 		Filename:   logFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
@@ -200,7 +203,6 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 		Compress:   true,
 	}
 
-	// 开始弃用 rotatelogs ，使用 lumberjack
 	infoWriter := &lumberjack.Logger{
 		Filename:   infoLogFileName + ".log",
 		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
