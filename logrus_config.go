@@ -154,11 +154,12 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 				// gorm框架日志特殊处理
 				_, file1, line1, ok := runtime.Caller(14)
 				if !ok {
-					logrus.Errorf("获取行号失败 %v,%v", file1, line1)
+					return fmt.Sprintf(" (%s:%d) ", file, line)
+				} else {
+					return fmt.Sprintf(" (%s:%d)  => (%s:%d) ", file1, line1, file, line)
 				}
 				//sprintf := fmt.Sprintf(" fileFormatter (%s:%d) => (%s:%d)", file1, line1, file, line)
 				//println(sprintf)
-				return fmt.Sprintf(" (%s:%d)  => (%s:%d) ", file1, line1, file, line)
 			}
 
 			return fmt.Sprintf(" (%s:%d)", file, line)
