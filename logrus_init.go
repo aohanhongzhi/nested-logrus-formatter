@@ -9,6 +9,16 @@ import (
 
 var AppName string
 
+// LogBaseDir 保存日志的根目录（由 LogrusInit 赋值）
+var LogBaseDir string
+
+// 供扩展能力（如标签日志）复用的全局配置（由 LogrusInit 赋值）
+var (
+	GlobalReserveDuration       = DefaultReserveDuration
+	GlobalRotationSize    int64 = DefaultRotationSize
+	GlobalMaxBackups            = 3
+)
+
 const DefaultReserveDuration = time.Duration(72) * time.Hour
 const DefaultRotationSize int64 = 20 * 1024 * 1024
 
@@ -44,3 +54,5 @@ func LogInitWithMaxBackup(noConsole bool, appName string, level logrus.Level, re
 	// 使用 .表示当前路径
 	return LogrusInit(noConsole, appName, ".", level, reserveDuration, rotationSize, maxBackups)
 }
+
+// TODO 获取当前执行文件的目录，但是IDE下获取当前工程目录。两者都需要兼容。

@@ -114,6 +114,10 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	// 设置时区为东八区
 	os.Setenv("TZ", "Asia/Shanghai")
 	AppName = appName
+	LogBaseDir = dir
+	GlobalReserveDuration = reserveDuration
+	GlobalRotationSize = rotationSize
+	GlobalMaxBackups = maxBackups
 	// 参考文章 https://juejin.cn/post/7026912807333888014
 	logPath := filepath.Join(dir, "/log")
 	debugLogPath := filepath.Join(dir, "/log/debug/")
