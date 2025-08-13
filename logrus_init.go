@@ -55,4 +55,9 @@ func LogInitWithMaxBackup(noConsole bool, appName string, level logrus.Level, re
 	return LogrusInit(noConsole, appName, ".", level, reserveDuration, rotationSize, maxBackups)
 }
 
-// TODO 获取当前执行文件的目录，但是IDE下获取当前工程目录。两者都需要兼容。
+func LogInitWithDir(noConsole bool, appName string, logDir string, level logrus.Level, reserveDuration time.Duration, rotationSize int64, maxBackups int) io.Writer {
+	if logDir == "" {
+		logDir = GetCurrentPath()
+	}
+	return LogrusInit(noConsole, appName, logDir, level, reserveDuration, rotationSize, maxBackups)
+}

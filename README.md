@@ -184,3 +184,24 @@ git push --tags
 ```go.mod
 replace github.com/aohanhongzhi/nested-logrus-formatter => /home/eric/Project/Go/nested-logrus-formatter
 ```
+
+## Tag 专属日志
+
+为不改变现有接口，新增可选能力：启用后，任一包含字段 `tag` 的日志将被“旁路”写入 `./log/tag/<tag>.log`，原有日志流保持不变。
+
+```go
+nested.LogInitWithLevel(false, "my-app", log.DebugLevel)
+// 开启 tag 旁路写入能力
+nested.EnableTagFileRouter()
+
+// 任意位置打印带 tag 的日志
+log.WithField("tag", "orders").Info("created order #1")
+log.WithField("tag", "orders").Error("order failed")
+// 也可以使用其他 tag
+log.WithField("tag", "book").Warn("book warn")
+```
+
+说明：
+- tag 文件路径：`<初始化dir>/log/tag/<tag>.log`
+- 滚动策略（大小、保留天数、备份数）与主日志一致
+- 异步写入，低开销；程序退出时会自动 Flush（也可手动调用 `formatter.FlushAsyncHooks()`）

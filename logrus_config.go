@@ -114,6 +114,10 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 	// 设置时区为东八区
 	os.Setenv("TZ", "Asia/Shanghai")
 	AppName = appName
+	// 自动解析目录：生产环境取可执行文件所在目录；IDE 下取工程工作目录
+	if dir == "" {
+		dir = GetCurrentPath()
+	}
 	LogBaseDir = dir
 	GlobalReserveDuration = reserveDuration
 	GlobalRotationSize = rotationSize

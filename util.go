@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// 获取当前执行文件的目录，但是IDE下获取当前工程目录。两者都需要兼容。
 func GetCurrentPath() string {
 	var path string
 	ex, err1 := os.Executable()
