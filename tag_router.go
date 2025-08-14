@@ -78,8 +78,10 @@ func getOrCreateTagHook(tagName string) logrus.Hook {
 
 func (h *TagRouterHook) Fire(entry *logrus.Entry) error {
 	val, ok := entry.Data["tag"]
+	// 未带 tag 时写入 no-tag.log
 	if !ok {
-		return nil
+		lfHook := getOrCreateTagHook("no-tag")
+		return lfHook.Fire(entry)
 	}
 	// 转字符串并安全化文件名
 	tagName := ""
@@ -90,7 +92,7 @@ func (h *TagRouterHook) Fire(entry *logrus.Entry) error {
 		tagName = "unknown"
 	}
 	if tagName == "" {
-		return nil
+		tagName = "no-tag"
 	}
 	tagName = sanitizeTagFilename(tagName)
 

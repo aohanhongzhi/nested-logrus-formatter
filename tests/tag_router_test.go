@@ -21,6 +21,10 @@ func TestTagRouterCreatesTagFile(t *testing.T) {
 
 	log.WithField("tag", "book").Error("book error")
 
+	// 写入无 tag 的日志，应进入 no-tag.log
+	log.Info("no tag info")
+	log.Error("no tag error")
+
 	// 等待异步 hook 处理完
 	formatter.FlushAsyncHooks()
 	// 保险起见，稍作等待
@@ -30,5 +34,11 @@ func TestTagRouterCreatesTagFile(t *testing.T) {
 	path := filepath.Join(".", "log", "tag", "orders.log")
 	if _, err := os.Stat(path); err != nil {
 		t.Fatalf("expect tag log file exists, got error: %v", err)
+	}
+
+	// 断言 no-tag 存在
+	noTagPath := filepath.Join(".", "log", "tag", "no-tag.log")
+	if _, err := os.Stat(noTagPath); err != nil {
+		t.Fatalf("expect no-tag log file exists, got error: %v", err)
 	}
 }
