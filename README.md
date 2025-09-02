@@ -207,3 +207,49 @@ log.WithField("tag", "book").Warn("book warn")
 - tag 文件路径：`<初始化dir>/log/tag/<tag>.log`
 - 滚动策略（大小、保留天数、备份数）与主日志一致
 - 异步写入，低开销；程序退出时会自动 Flush（也可手动调用 `formatter.FlushAsyncHooks()`）
+
+## GORM 错误邮件报警
+
+为配合GORM数据库操作，新增可选的GORM错误邮件报警功能。当GORM产生错误日志时，会自动发送邮件报警。
+
+```go
+nested.LogInitWithLevel(false, "my-app", log.DebugLevel)
+
+// 启用GORM错误邮件报警（需要有效的邮件服务器配置）
+err := nested.EnableGormErrorMail(
+    "my-app",           // 应用名称
+    "smtp.qq.com",      // SMTP服务器
+    587,                // 端口
+    "sender@qq.com",    // 发件人
+    "alert@qq.com",     // 收件人
+    "sender@qq.com",    // 用户名
+    "password",         // 密码/授权码
+)
+if err != nil {
+    log.Errorf("启用GORM错误邮件报警失败: %v", err)
+}
+
+// 后续的GORM错误会自动发送邮件
+// 例如: gorm日志 "Error 1406 (22001): Data too long for column..."
+```
+
+### 控制开关
+
+```go
+// 检查是否已启用
+enabled := nested.IsGormErrorMailEnabled()
+
+// 临时禁用
+nested.DisableGormErrorMail()
+
+// 重新启用（如果之前创建过Hook）
+if globalHook := nested.GetGormErrorMailHook(); globalHook != nil {
+    globalHook.Enable = true
+}
+```
+
+说明：
+- 自动检测GORM错误日志特征（包含"[Error "和gormv2-logrus调用栈）
+- 只针对Error、Fatal、Panic级别日志
+- 邮件包含完整的错误信息、调用栈和时间戳
+- 可随时开启/关闭，不会影响正常日志输出
