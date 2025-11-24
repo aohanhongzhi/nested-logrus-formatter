@@ -12,7 +12,6 @@ import (
 
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // AsyncHook 是一个异步的logrus hook，用于避免日志写入阻塞主程序
@@ -194,55 +193,19 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 		},
 	}
 
-	writer := &lumberjack.Logger{
-		Filename:   logFileName + ".log",
-		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
-		MaxBackups: maxBackups,                        // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
-		MaxAge:     int(reserveDuration.Hours() / 24), // days
-		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
-	}
+	writer := newDailyLumberjackLogger(logFileName+".log", rotationSize, reserveDuration, maxBackups)
 
 	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。 实际上没有清理
 	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
-	debugWriter := &lumberjack.Logger{
-		Filename:   debugLogFileName + ".log",
-		MaxSize:    int(rotationSize) / (1024 * 1024),
-		MaxBackups: maxBackups,
-		MaxAge:     int(reserveDuration.Hours() / 24),
-		Compress:   true,
-	}
+	debugWriter := newDailyLumberjackLogger(debugLogFileName+".log", rotationSize, reserveDuration, maxBackups)
 
-	infoWriter := &lumberjack.Logger{
-		Filename:   infoLogFileName + ".log",
-		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
-		MaxBackups: maxBackups,                        // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
-		MaxAge:     int(reserveDuration.Hours() / 24), // days
-		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
-	}
+	infoWriter := newDailyLumberjackLogger(infoLogFileName+".log", rotationSize, reserveDuration, maxBackups)
 
-	warnWriter := &lumberjack.Logger{
-		Filename:   warnlogFileName + ".log",
-		MaxSize:    int(rotationSize) / (1024 * 1024),
-		MaxBackups: maxBackups,
-		MaxAge:     int(reserveDuration.Hours() / 24),
-		Compress:   true,
-	}
+	warnWriter := newDailyLumberjackLogger(warnlogFileName+".log", rotationSize, reserveDuration, maxBackups)
 
-	errorWriter := &lumberjack.Logger{
-		Filename:   errorlogFileName + ".log",
-		MaxSize:    int(rotationSize) / (1024 * 1024),
-		MaxBackups: maxBackups,
-		MaxAge:     int(reserveDuration.Hours() / 24),
-		Compress:   true,
-	}
+	errorWriter := newDailyLumberjackLogger(errorlogFileName+".log", rotationSize, reserveDuration, maxBackups)
 
-	panicWriter := &lumberjack.Logger{
-		Filename:   paniclogFileName + ".log",
-		MaxSize:    int(rotationSize) / (1024 * 1024),
-		MaxBackups: maxBackups,
-		MaxAge:     int(reserveDuration.Hours() / 24),
-		Compress:   true,
-	}
+	panicWriter := newDailyLumberjackLogger(paniclogFileName+".log", rotationSize, reserveDuration, maxBackups)
 
 	writers := []io.Writer{writer, errorWriter}
 
@@ -291,13 +254,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 
 	// 下面是另一个日志文件处理方式
 
-	fileWriter := &lumberjack.Logger{
-		Filename:   "all.log",
-		MaxSize:    int(rotationSize) / (1024 * 1024), // megabytes
-		MaxBackups: maxBackups,                        // 控制备份个数，最后打包压缩成 *.log.gz 格式，最大化减小体积，10倍差距
-		MaxAge:     int(reserveDuration.Hours() / 24), // days
-		Compress:   true,                              // disabled by default,最后打包压缩成 *.log.gz 格式
-	}
+	fileWriter := newDailyLumberjackLogger("all.log", rotationSize, reserveDuration, maxBackups)
 
 	var multiWriter io.Writer
 	if noConsole {

@@ -7,7 +7,6 @@ import (
 
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // TagRouterHook 根据 entry.Data["tag"] 将日志额外写入 tag 专属文件
@@ -45,13 +44,7 @@ func getOrCreateTagHook(tagName string) logrus.Hook {
 	filePath := filepath.Join(baseDir, "/log/tag/", tagName+".log")
 	MkLogdir(filepath.Dir(filePath))
 
-	writer := &lumberjack.Logger{
-		Filename:   filePath,
-		MaxSize:    int(GlobalRotationSize) / (1024 * 1024),
-		MaxBackups: GlobalMaxBackups,
-		MaxAge:     int(GlobalReserveDuration.Hours() / 24),
-		Compress:   true,
-	}
+	writer := newDailyLumberjackLogger(filePath, GlobalRotationSize, GlobalReserveDuration, GlobalMaxBackups)
 
 	fileFormatter := &Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
