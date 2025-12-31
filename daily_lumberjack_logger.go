@@ -22,7 +22,7 @@ func newDailyLumberjackLogger(filename string, rotationSize int64, reserveDurati
 	return &dailyLumberjackLogger{
 		logger: &lumberjack.Logger{
 			Filename:   filename,
-			MaxSize:    int(rotationSize) / (1024 * 1024),
+			MaxSize:    maxSizeMB(rotationSize),
 			MaxBackups: maxBackups,
 			MaxAge:     int(reserveDuration.Hours() / 24),
 			Compress:   true,
@@ -30,6 +30,24 @@ func newDailyLumberjackLogger(filename string, rotationSize int64, reserveDurati
 		},
 		currentDay: detectFileDay(filename),
 	}
+}
+
+func newSizeLumberjackLogger(filename string, rotationSize int64, reserveDuration time.Duration, maxBackups int) *lumberjack.Logger {
+	return &lumberjack.Logger{
+		Filename:   filename,
+		MaxSize:    maxSizeMB(rotationSize),
+		MaxBackups: maxBackups,
+		MaxAge:     int(reserveDuration.Hours() / 24),
+		Compress:   true,
+		LocalTime:  true,
+	}
+}
+
+func maxSizeMB(rotationSize int64) int {
+	if rotationSize <= 0 {
+		return 0
+	}
+	return int(rotationSize / (1024 * 1024))
 }
 
 func detectFileDay(filename string) string {

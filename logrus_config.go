@@ -14,6 +14,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func normalizeRotationMode(mode RotationMode) RotationMode {
+	if mode != RotationModeTime && mode != RotationModeSize {
+		return DefaultRotationMode
+	}
+	return mode
+}
+
+func newLogWriter(filename string, mode RotationMode, rotationSize int64, reserveDuration time.Duration, maxBackups int) io.Writer {
+	if mode == RotationModeSize {
+		return newSizeLumberjackLogger(filename, rotationSize, reserveDuration, maxBackups)
+	}
+	sizeForDaily := rotationSize
+	if mode == RotationModeTime {
+		sizeForDaily = 0
+	}
+	return newDailyLumberjackLogger(filename, sizeForDaily, reserveDuration, maxBackups)
+}
+
 // AsyncHook 是一个异步的logrus hook，用于避免日志写入阻塞主程序
 type AsyncHook struct {
 	hook     logrus.Hook
@@ -109,7 +127,7 @@ func (h *AsyncHook) Flush() {
 }
 
 // 支持日志存放位置
-func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserveDuration time.Duration, rotationSize int64, maxBackups int) io.Writer {
+func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, rotationMode RotationMode, reserveDuration time.Duration, rotationSize int64, maxBackups int) io.Writer {
 	// 设置时区为东八区
 	os.Setenv("TZ", "Asia/Shanghai")
 	AppName = appName
@@ -118,6 +136,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 		dir = GetCurrentPath()
 	}
 	LogBaseDir = dir
+	GlobalRotationMode = normalizeRotationMode(rotationMode)
 	GlobalReserveDuration = reserveDuration
 	GlobalRotationSize = rotationSize
 	GlobalMaxBackups = maxBackups
@@ -193,19 +212,19 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 		},
 	}
 
-	writer := newDailyLumberjackLogger(logFileName+".log", rotationSize, reserveDuration, maxBackups)
+	writer := newLogWriter(logFileName+".log", GlobalRotationMode, rotationSize, reserveDuration, maxBackups)
 
 	// 下面配置日志大小达到10M就会生成一个新文件，保留最近 3 天的日志文件，多余的自动清理掉。 实际上没有清理
 	// 参考文章 https://blog.csdn.net/qq_42119514/article/details/121372416
-	debugWriter := newDailyLumberjackLogger(debugLogFileName+".log", rotationSize, reserveDuration, maxBackups)
+	debugWriter := newLogWriter(debugLogFileName+".log", GlobalRotationMode, rotationSize, reserveDuration, maxBackups)
 
-	infoWriter := newDailyLumberjackLogger(infoLogFileName+".log", rotationSize, reserveDuration, maxBackups)
+	infoWriter := newLogWriter(infoLogFileName+".log", GlobalRotationMode, rotationSize, reserveDuration, maxBackups)
 
-	warnWriter := newDailyLumberjackLogger(warnlogFileName+".log", rotationSize, reserveDuration, maxBackups)
+	warnWriter := newLogWriter(warnlogFileName+".log", GlobalRotationMode, rotationSize, reserveDuration, maxBackups)
 
-	errorWriter := newDailyLumberjackLogger(errorlogFileName+".log", rotationSize, reserveDuration, maxBackups)
+	errorWriter := newLogWriter(errorlogFileName+".log", GlobalRotationMode, rotationSize, reserveDuration, maxBackups)
 
-	panicWriter := newDailyLumberjackLogger(paniclogFileName+".log", rotationSize, reserveDuration, maxBackups)
+	panicWriter := newLogWriter(paniclogFileName+".log", GlobalRotationMode, rotationSize, reserveDuration, maxBackups)
 
 	writers := []io.Writer{writer, errorWriter}
 
@@ -254,7 +273,7 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, reserve
 
 	// 下面是另一个日志文件处理方式
 
-	fileWriter := newDailyLumberjackLogger("all.log", rotationSize, reserveDuration, maxBackups)
+	fileWriter := newLogWriter("all.log", GlobalRotationMode, rotationSize, reserveDuration, maxBackups)
 
 	var multiWriter io.Writer
 	if noConsole {
