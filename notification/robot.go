@@ -1,4 +1,4 @@
-package formatter
+package notification
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aohanhongzhi/nested-logrus-formatter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -100,7 +101,7 @@ func SendToRobotMessage(appName, msg string, talkType, ReceiverId, RobotId int) 
 }
 
 func SendRobotMessage(content string, talkType, ReceiverId, RobotId int) {
-	defer PanicHandler()
+	defer formatter.PanicHandler()
 
 	messageParam := NewMessageParamIM{
 		Type:    "text",

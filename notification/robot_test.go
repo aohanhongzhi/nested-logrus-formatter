@@ -1,13 +1,14 @@
-package formatter
+package notification
 
 import (
 	"testing"
 
+	"github.com/aohanhongzhi/nested-logrus-formatter"
 	log "github.com/sirupsen/logrus"
 )
 
 func TestRobot(t *testing.T) {
-	LogInitRobot(false, true, "test")
+	formatter.LogInitRobot(false, true, "test")
 	//log.AddHook(NewRobotLogger("app-test"))
 
 	log.Error("测试")

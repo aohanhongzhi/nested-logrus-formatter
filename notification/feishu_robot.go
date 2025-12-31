@@ -1,4 +1,4 @@
-package formatter
+package notification
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aohanhongzhi/nested-logrus-formatter"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,9 +28,9 @@ func FeishuRobotDetail(msg string, appName ...string) {
 			logrus.Errorf("获取主机名失败 %+v", err)
 		}
 		if len(appName) > 0 {
-			AppName = appName[0]
+			formatter.AppName = appName[0]
 		}
-		content := timeValue + "【" + AppName + "】" + name + "(" + file + ":" + strconv.Itoa(line) + "):" + msg
+		content := timeValue + "【" + formatter.AppName + "】" + name + "(" + file + ":" + strconv.Itoa(line) + "):" + msg
 		feishuRobot(content)
 	}(file, line, msg, appName...)
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	formatter "github.com/aohanhongzhi/nested-logrus-formatter"
+	"github.com/aohanhongzhi/nested-logrus-formatter/notification"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -15,7 +16,7 @@ func TestGormErrorMailHook(t *testing.T) {
 	// 这里只是测试Hook的创建和基本逻辑，不发送实际邮件
 
 	// 创建Hook（这里使用虚拟配置）
-	hook, err := formatter.NewGormErrorMailHook(
+	hook, err := notification.NewGormErrorMailHook(
 		"test-app",
 		"smtp.example.com",
 		587,

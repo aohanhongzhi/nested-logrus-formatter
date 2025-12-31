@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	formatter "github.com/aohanhongzhi/nested-logrus-formatter"
+	"github.com/aohanhongzhi/nested-logrus-formatter/notification"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -16,7 +17,7 @@ func main() {
 	// 可选：启用GORM错误邮件报警（需要有效的邮件服务器配置）
 	// 注意：这里使用虚拟配置，仅作为示例
 
-	err := formatter.EnableGormErrorMail(
+	err := notification.EnableGormErrorMail(
 		"gorm-example",
 		"smtp.qq.com",
 		587,
@@ -40,7 +41,7 @@ func main() {
 	log.Error("这是一条普通的错误日志")
 
 	// 检查GORM邮件报警状态
-	enabled := formatter.IsGormErrorMailEnabled()
+	enabled := notification.IsGormErrorMailEnabled()
 	fmt.Printf("GORM错误邮件报警启用状态: %v\n", enabled)
 
 	fmt.Println("\n示例完成。实际使用时，请配置有效的邮件服务器信息。")
