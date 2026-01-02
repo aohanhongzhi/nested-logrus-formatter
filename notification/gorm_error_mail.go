@@ -2,6 +2,7 @@ package notification
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/mail"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
 )
 
@@ -86,6 +88,15 @@ func (hook *GormErrorMailHook) Fire(entry *logrus.Entry) error {
 
 // isGormErrorLog 检测是否为GORM错误日志
 func isGormErrorLog(entry *logrus.Entry) bool {
+
+	for key, value := range entry.Data {
+		if key == "error" {
+			if _, ok := value.(*mysql.MySQLError); ok {
+				return true
+			}
+		}
+	}
+
 	// 检查Message是否包含GORM错误特征
 	if strings.Contains(entry.Message, "[Error ") && strings.Contains(entry.Message, ":") {
 		// 检查是否包含gormv2-logrus的调用栈特征
@@ -106,18 +117,75 @@ func isGormErrorLog(entry *logrus.Entry) bool {
 func (hook *GormErrorMailHook) sendGormErrorMail(entry *logrus.Entry) error {
 	auth := smtp.PlainAuth("", hook.Username, hook.Password, hook.Host)
 
+	// 创建 TLS 连接
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true, // 如果需要跳过证书验证，可以设置为 true
+		ServerName:         hook.Host,
+	}
+
+	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", hook.Host, hook.Port), tlsConfig)
+	if err != nil {
+		return err
+	}
+
 	message := hook.createGormErrorMailMessage(entry)
 
-	// 发送邮件
-	err := smtp.SendMail(
-		hook.Host+":"+strconv.Itoa(hook.Port),
-		auth,
-		hook.From.Address,
-		[]string{hook.To.Address},
-		message.Bytes(),
-	)
+	client, err := smtp.NewClient(conn, hook.Host)
 	if err != nil {
-		return fmt.Errorf("发送GORM错误邮件失败: %v", err)
+		_ = conn.Close()
+		return err
+	}
+
+	// 确保关闭
+	defer func() {
+		if client != nil {
+			if e := client.Quit(); e != nil {
+				if !strings.Contains(e.Error(), "OK") {
+				}
+			}
+		}
+		_ = conn.Close()
+	}()
+
+	// 使用 AUTH 进行身份验证
+	if err := client.Auth(auth); err != nil {
+		if strings.Contains(err.Error(), "535") {
+			return err
+		} else {
+			return err
+		}
+	}
+
+	// 设置发件人和收件人
+	var toPerson string
+
+	if err := client.Mail(hook.From.Address); err != nil {
+		return err
+	}
+	for _, addr := range []string{hook.To.Address} {
+		//for _, addr := range []string{"3227556776@qq.com", "3028536139@qq.com", "18175306923@163.com"} {
+		if toPerson == "" {
+			toPerson = addr
+		} else {
+			toPerson = toPerson + "," + addr
+		}
+		if err := client.Rcpt(addr); err != nil {
+			return err
+		}
+	}
+
+	// 发送邮件内容
+	wc, err := client.Data()
+	if err != nil {
+		return err
+	}
+	if wc != nil {
+		defer wc.Close()
+
+		_, err = fmt.Fprintf(wc, "%v", message)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -125,12 +193,12 @@ func (hook *GormErrorMailHook) sendGormErrorMail(entry *logrus.Entry) error {
 
 // createGormErrorMailMessage 创建GORM错误邮件消息
 func (hook *GormErrorMailHook) createGormErrorMailMessage(entry *logrus.Entry) *bytes.Buffer {
-	body := fmt.Sprintf("[%s] GORM数据库错误\n\n时间: %s\n错误信息: %s",
+	body := fmt.Sprintf("[%s] GORM Database Error 数据库错误\n\n时间: %s\n错误信息: %s",
 		hook.AppName,
 		entry.Time.Format("2006-01-02 15:04:05"),
 		entry.Message)
 
-	subject := fmt.Sprintf("[%s] GORM数据库错误报警", hook.AppName)
+	subject := fmt.Sprintf("[%s] GORM Database Error 数据库错误报警", hook.AppName)
 
 	// 添加调用栈信息
 	if entry.HasCaller() {
