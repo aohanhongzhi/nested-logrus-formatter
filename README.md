@@ -174,6 +174,13 @@ github.com/aohanhongzhi/gormv2-logrus
 
 ![输入图片说明](assets/log-color.png)
 
+
+# 强制指定版本
+
+```shell
+ go mod tidy -go=1.19
+```
+
 # 发布
 
 ```shell
