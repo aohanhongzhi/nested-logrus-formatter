@@ -44,7 +44,7 @@ func getOrCreateTagHook(tagName string) logrus.Hook {
 	filePath := filepath.Join(baseDir, "/log/tag/", tagName+".log")
 	MkLogdir(filepath.Dir(filePath))
 
-	writer := newDailyLumberjackLogger(filePath, GlobalRotationSize, GlobalReserveDuration, GlobalMaxBackups)
+	writer := newDailyLumberjackLogger(filePath, GlobalRotationSize, GlobalReserveDuration, GlobalMaxBackups, true)
 
 	fileFormatter := &Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",

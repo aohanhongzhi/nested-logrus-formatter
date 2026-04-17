@@ -18,27 +18,27 @@ type dailyLumberjackLogger struct {
 	currentDay string
 }
 
-func newDailyLumberjackLogger(filename string, rotationSize int64, reserveDuration time.Duration, maxBackups int) *dailyLumberjackLogger {
+func newDailyLumberjackLogger(filename string, rotationSize int64, reserveDuration time.Duration, maxBackups int, compress bool) *dailyLumberjackLogger {
 	return &dailyLumberjackLogger{
 		logger: &lumberjack.Logger{
 			Filename:   filename,
 			MaxSize:    maxSizeMB(rotationSize),
 			MaxBackups: maxBackups,
 			MaxAge:     int(reserveDuration.Hours() / 24),
-			Compress:   true,
+			Compress:   compress,
 			LocalTime:  true,
 		},
 		currentDay: detectFileDay(filename),
 	}
 }
 
-func newSizeLumberjackLogger(filename string, rotationSize int64, reserveDuration time.Duration, maxBackups int) *lumberjack.Logger {
+func newSizeLumberjackLogger(filename string, rotationSize int64, reserveDuration time.Duration, maxBackups int, compress bool) *lumberjack.Logger {
 	return &lumberjack.Logger{
 		Filename:   filename,
 		MaxSize:    maxSizeMB(rotationSize),
 		MaxBackups: maxBackups,
 		MaxAge:     int(reserveDuration.Hours() / 24),
-		Compress:   true,
+		Compress:   compress,
 		LocalTime:  true,
 	}
 }
