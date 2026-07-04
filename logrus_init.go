@@ -54,6 +54,11 @@ func LogInitWithLevel(noConsole bool, appName string, level logrus.Level) io.Wri
 	return LogrusInit(noConsole, appName, ".", level, DefaultRotationMode, DefaultReserveDuration, DefaultRotationSize, 3)
 }
 
+func LogInitWithLevelAndGormLog(noConsole, noGormLog bool, appName string, level logrus.Level) io.Writer {
+	// 使用 .表示当前路径
+	return LogrusInitWithGormLog(noConsole, noGormLog, appName, ".", level, DefaultRotationMode, DefaultReserveDuration, DefaultRotationSize, 3)
+}
+
 func LogInitWithParam(noConsole bool, appName string, level logrus.Level, reserveDuration time.Duration, rotationSize int64) io.Writer {
 	// 使用 .表示当前路径
 	return LogrusInit(noConsole, appName, ".", level, DefaultRotationMode, reserveDuration, rotationSize, 3)
@@ -64,9 +69,21 @@ func LogInitWithMaxBackup(noConsole bool, appName string, level logrus.Level, re
 	return LogrusInit(noConsole, appName, ".", level, DefaultRotationMode, reserveDuration, rotationSize, maxBackups)
 }
 
+func LogInitWithMaxBackupNoGormLog(noConsole,noGormLog bool, appName string, level logrus.Level, reserveDuration time.Duration, rotationSize int64, maxBackups int) io.Writer {
+	// 使用 .表示当前路径
+	return LogrusInitWithGormLog(noConsole, noGormLog, appName,  ".",  level, DefaultRotationMode, reserveDuration, rotationSize, maxBackups)
+}
+
 func LogInitWithDir(noConsole bool, appName string, logDir string, level logrus.Level, rotationMode RotationMode, reserveDuration time.Duration, rotationSize int64, maxBackups int) io.Writer {
 	if logDir == "" {
 		logDir = GetCurrentPath()
 	}
 	return LogrusInit(noConsole, appName, logDir, level, rotationMode, reserveDuration, rotationSize, maxBackups)
+}
+
+func LogInitWithDirAndGormLog(noConsole, noGormLog bool, appName string, logDir string, level logrus.Level, rotationMode RotationMode, reserveDuration time.Duration, rotationSize int64, maxBackups int) io.Writer {
+	if logDir == "" {
+		logDir = GetCurrentPath()
+	}
+	return LogrusInitWithGormLog(noConsole, noGormLog, appName, logDir, level, rotationMode, reserveDuration, rotationSize, maxBackups)
 }

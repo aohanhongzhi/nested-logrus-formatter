@@ -43,12 +43,19 @@ type Formatter struct {
 	// CallerFirst - print caller info first
 	CallerFirst bool
 
+	// NoGormLog - hide logs emitted by github.com/aohanhongzhi/gormv2-logrus
+	NoGormLog bool
+
 	// CustomCallerFormatter - set custom formatter for caller info
 	CustomCallerFormatter func(*runtime.Frame) string
 }
 
 // Format an log entry
 func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
+	if f.NoGormLog && isGormV2LogrusEntry(entry) {
+		return []byte{}, nil
+	}
+
 	levelColor := getColorByLevel(entry.Level)
 
 	timestampFormat := f.TimestampFormat
@@ -123,6 +130,10 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	b.WriteByte('\n')
 
 	return b.Bytes(), nil
+}
+
+func isGormV2LogrusEntry(entry *logrus.Entry) bool {
+	return entry.Caller != nil && strings.HasPrefix(entry.Caller.Function, "github.com/aohanhongzhi/gormv2-logrus")
 }
 
 func (f *Formatter) writeCaller(b *bytes.Buffer, entry *logrus.Entry) {

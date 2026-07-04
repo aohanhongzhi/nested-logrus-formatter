@@ -329,3 +329,45 @@ func TestFormatter_Format_with_report_caller_and_CustomCallerFormatter(t *testin
 		)
 	}
 }
+
+func TestFormatter_Format_no_gorm_log(t *testing.T) {
+	f := &formatter.Formatter{
+		NoColors:        true,
+		TimestampFormat: "-",
+		NoGormLog:       true,
+	}
+
+	gormEntry := logrus.NewEntry(logrus.New())
+	gormEntry.Level = logrus.InfoLevel
+	gormEntry.Message = "gorm log"
+	gormEntry.Caller = &runtime.Frame{
+		Function: "github.com/aohanhongzhi/gormv2-logrus.(*GormLogger).Info",
+		File:     "gorm_logger.go",
+		Line:     10,
+	}
+
+	got, err := f.Format(gormEntry)
+	if err != nil {
+		t.Fatalf("Format() error = %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("Format() should hide gorm log, got %q", string(got))
+	}
+
+	normalEntry := logrus.NewEntry(logrus.New())
+	normalEntry.Level = logrus.InfoLevel
+	normalEntry.Message = "normal log"
+	normalEntry.Caller = &runtime.Frame{
+		Function: "github.com/example/app.Service",
+		File:     "service.go",
+		Line:     20,
+	}
+
+	got, err = f.Format(normalEntry)
+	if err != nil {
+		t.Fatalf("Format() error = %v", err)
+	}
+	if !bytes.Contains(got, []byte("normal log")) {
+		t.Fatalf("Format() should keep normal log, got %q", string(got))
+	}
+}
