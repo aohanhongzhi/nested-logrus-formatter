@@ -41,7 +41,7 @@ func getOrCreateTagHook(tagName string) logrus.Hook {
 	if baseDir == "" {
 		baseDir = "."
 	}
-	filePath := filepath.Join(baseDir, "/log/tag/", tagName+".log")
+	filePath := filepath.Join(baseDir, "/log/tag/", tagName, tagName+".log")
 	MkLogdir(filepath.Dir(filePath))
 
 	writer := newDailyLumberjackLogger(filePath, GlobalRotationSize, GlobalReserveDuration, GlobalMaxBackups, true)
