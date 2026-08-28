@@ -47,11 +47,12 @@ func getOrCreateTagHook(tagName string) logrus.Hook {
 	writer := newDailyLumberjackLogger(filePath, GlobalRotationSize, GlobalReserveDuration, GlobalMaxBackups, true)
 
 	fileFormatter := &Formatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		NoColors:        false,
-		HideKeys:        true,
-		NoFieldsSpace:   false,
-		FieldsOrder:     []string{"component", "category", "req"},
+		TimestampFormat:       "2006-01-02 15:04:05",
+		NoColors:              false,
+		HideKeys:              true,
+		NoFieldsSpace:         false,
+		FieldsOrder:           []string{"component", "category", "req"},
+		CustomCallerFormatter: CustomCallerFormatter,
 	}
 
 	writerMap := lfshook.WriterMap{

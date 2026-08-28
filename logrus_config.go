@@ -131,6 +131,23 @@ func LogrusInit(noConsole bool, appName, dir string, level logrus.Level, rotatio
 	return LogrusInitWithGormLog(noConsole, false, appName, dir, level, rotationMode, reserveDuration, rotationSize, maxBackups)
 }
 
+func CustomCallerFormatter(f *runtime.Frame) string {
+	file, line := f.File, f.Line
+	if strings.HasPrefix(f.Function, "github.com/aohanhongzhi/gormv2-logrus") {
+		// gorm框架日志特殊处理
+		_, file1, line1, ok := runtime.Caller(14)
+		if !ok {
+			return fmt.Sprintf(" (%s:%d) ", file, line)
+		} else {
+			return fmt.Sprintf(" (%s:%d)  => (%s:%d) ", file1, line1, file, line)
+		}
+		//sprintf := fmt.Sprintf(" fileFormatter (%s:%d) => (%s:%d)", file1, line1, file, line)
+		//println(sprintf)
+	}
+
+	return fmt.Sprintf(" (%s:%d)", file, line)
+}
+
 // LogrusInitWithGormLog 支持控制 github.com/aohanhongzhi/gormv2-logrus 日志是否可见。
 func LogrusInitWithGormLog(noConsole, noGormLog bool, appName, dir string, level logrus.Level, rotationMode RotationMode, reserveDuration time.Duration, rotationSize int64, maxBackups int) io.Writer {
 	// 设置时区为东八区
@@ -174,28 +191,13 @@ func LogrusInitWithGormLog(noConsole, noGormLog bool, appName, dir string, level
 	logrus.SetReportCaller(true)
 
 	fileFormatter := &Formatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		NoColors:        false, // 服务器查看文件有颜色
-		HideKeys:        true,
-		NoFieldsSpace:   false,
-		NoGormLog:       noGormLog,
-		FieldsOrder:     []string{"component", "category", "req"},
-		CustomCallerFormatter: func(f *runtime.Frame) string {
-			file, line := f.File, f.Line
-			if strings.HasPrefix(f.Function, "github.com/aohanhongzhi/gormv2-logrus") {
-				// gorm框架日志特殊处理
-				_, file1, line1, ok := runtime.Caller(14)
-				if !ok {
-					return fmt.Sprintf(" (%s:%d) ", file, line)
-				} else {
-					return fmt.Sprintf(" (%s:%d)  => (%s:%d) ", file1, line1, file, line)
-				}
-				//sprintf := fmt.Sprintf(" fileFormatter (%s:%d) => (%s:%d)", file1, line1, file, line)
-				//println(sprintf)
-			}
-
-			return fmt.Sprintf(" (%s:%d)", file, line)
-		},
+		TimestampFormat:       "2006-01-02 15:04:05",
+		NoColors:              false, // 服务器查看文件有颜色
+		HideKeys:              true,
+		NoFieldsSpace:         false,
+		NoGormLog:             noGormLog,
+		FieldsOrder:           []string{"component", "category", "req"},
+		CustomCallerFormatter: CustomCallerFormatter,
 	}
 
 	stdoutFormatter := &Formatter{
